@@ -3,7 +3,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
-	viewer = new TetViewer();
+	viewer = new VolViewer();
 	setCentralWidget(viewer);
 	createActions();
 	createToolbar();
@@ -51,7 +51,7 @@ void MainWindow::dropEvent(QDropEvent * e)
 
 		QString canonicalFilePath = QFileInfo(filename).canonicalFilePath();
 		viewer->loadFromMainWin(sFileName, fExt);
-		QString title = "TetViewerQt - " + canonicalFilePath;
+		QString title = "VolViewerQt - " + canonicalFilePath;
 		setWindowTitle(title);
 	}
 }
@@ -121,14 +121,6 @@ void MainWindow::createActions()
 	viewPoints->setCheckable(true);
 	viewPoints->setChecked(false);
 	connect(viewPoints, SIGNAL(triggered()), this, SLOT(showPoints()));
-
-	viewTotalWire = new QAction(tr("&TotalWire"), this);
-	viewTotalWire->setIcon(QIcon(":/icons/images/totalwire.png"));
-	viewTotalWire->setText(tr("Draw TotalWire"));
-	viewTotalWire->setStatusTip(tr("TotalWire"));
-	viewTotalWire->setCheckable(true);
-	viewTotalWire->setChecked(false);
-	connect(viewTotalWire, SIGNAL(triggered()), this, SLOT(showTotalWire()));
 
 	viewWireframe = new QAction(tr("&Wireframe"), this);
 	viewWireframe->setIcon(QIcon(":/icons/images/wireframe.png"));
@@ -236,7 +228,6 @@ void MainWindow::createToolbar()
 	viewToolbar = addToolBar(tr("&View"));
 	viewToolbar->addAction(lightControl);
 	viewToolbar->addAction(viewPoints);
-	viewToolbar->addAction(viewTotalWire);
 	viewToolbar->addAction(viewWireframe);
 	viewToolbar->addAction(viewFlatlines);
 	viewToolbar->addAction(viewFlat);
@@ -255,7 +246,6 @@ void MainWindow::createToolbar()
 	drawModeGroup = new QActionGroup(this);
 	
 	drawModeGroup->addAction(viewPoints);
-	drawModeGroup->addAction(viewTotalWire);
 	drawModeGroup->addAction(viewWireframe);
 	drawModeGroup->addAction(viewFlatlines);
 	drawModeGroup->addAction(viewFlat);
@@ -273,11 +263,6 @@ void MainWindow::createToolbar()
 void MainWindow::showPoints()
 {
 	viewer->setDrawMode(DRAW_MODE::POINTS);
-}
-
-void MainWindow::showTotalWire()
-{
-	viewer->setDrawMode(DRAW_MODE::TOTALWIRE);
 }
 
 void MainWindow::showWireframe()

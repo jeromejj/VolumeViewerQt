@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-#include "TetViewer.h"
+#include "VolViewer.h"
 #include "checkableAction.h"
 #include <QAction>
 #include <QtGui>
@@ -26,7 +26,7 @@ private:
 
 private:
 
-	TetViewer * viewer;
+	VolViewer * viewer;
 
 	QAction * openAction;
 	QAction * saveAction;
@@ -35,7 +35,6 @@ private:
 	checkableAction * rotationControl;
 
 	QAction * viewPoints;
-	QAction * viewTotalWire;
 	QAction * viewWireframe;
 	QAction * viewFlatlines;
 	QAction * viewFlat;
@@ -59,7 +58,6 @@ private:
 	QAction * zCut;
 	QActionGroup * cutGroup;
 	
-
 	QAction * plusMove;
 	QAction * minusMove;
 
@@ -80,8 +78,6 @@ private slots:
 	void showBoundary();
 
 	void showVector();
-
-	void showTotalWire();
 };
 
 #endif // MAINWINDOW_H
