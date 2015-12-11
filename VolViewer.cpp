@@ -6,6 +6,8 @@
 VolViewer::VolViewer(QWidget *_parent) : QGLWidget(_parent)
 {
 	mesh = new TMeshLib::CVTMesh();
+	hmesh = new HMeshLib::CVHMesh();
+
 	isSelectionMode = false;
 	isSelectionCutFaceMode = false;
 	cutDistance = 0.0;
@@ -207,10 +209,10 @@ void VolViewer::drawHalfFaces(std::vector<TMeshLib::CViewerHalfFace*> & HalfFace
 void VolViewer::drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces)
 {
 	glBindTexture(GL_TEXTURE_2D, texName);
-	glBegin(GL_POLYGON);
+	
 	for (std::vector<HMeshLib::CHViewerHalfFace*>::iterator hfIter = HalfFaces.begin(); hfIter != HalfFaces.end(); hfIter++)
 	{
-
+		glBegin(GL_POLYGON);
 		HMeshLib::CHViewerHalfFace * pHF = *hfIter;
 		HMeshLib::CHViewerFace * pF = hmesh->HalfFaceFace(pHF);
 
@@ -226,15 +228,19 @@ void VolViewer::drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFac
 		for (HMeshLib::CVHMesh::HalfFaceVertexIterator fvIter(hmesh, pHF); !fvIter.end(); ++fvIter)
 		{
 			HMeshLib::CHViewerVertex * v = *fvIter;
+			std::cout << v->id() << " ";
 			CPoint pt = v->position();
+			std::cout << "(" << pt[0] << " " << pt[1] << " " << pt[2] << ")";
 			CPoint n = pHF->normal();
 			CPoint2 uv = v->uv();
 			glNormal3d(n[0], n[1], n[2]);
 			glTexCoord2d(uv[0], uv[1]);
 			glVertex3d(pt[0], pt[1], pt[2]);
 		}
+		std::cout << std::endl;
+		glEnd();
 	}
-	glEnd();
+	
 }
 
 void VolViewer::drawMeshPoints()
@@ -909,12 +915,19 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 	{
 		free(mesh);
 		mesh = new TMeshLib::CVTMesh();
+		hmesh = new HMeshLib::CVHMesh();
 	}
 
 	if (fileExt == "tet")
 	{
 		mesh->_load(meshfile);
 		meshVolType = VOLUME_TYPE::TET;
+	}
+
+	if (fileExt == "hm")
+	{
+		hmesh->_load_hm(meshfile);
+		meshVolType = VOLUME_TYPE::HEX;
 	}
 
 	if (fileExt == "t")
@@ -954,13 +967,22 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 		pT->_from_string();
 	}
 
-	mesh->_normalize();
-	mesh->_halfface_normal();
-
 	meshDrawMode = DRAW_MODE::FLAT;
 
 	CPlane p(CPoint(0.0, 0.0, 1.0), 0.0);
-	mesh->_cut(p);
+
+	if (meshVolType == VOLUME_TYPE::TET)
+	{
+		mesh->_normalize();
+		mesh->_halfface_normal();
+		mesh->_cut(p);
+	}
+	else if (meshVolType == VOLUME_TYPE::HEX)
+	{
+		hmesh->_normalize();
+		hmesh->_halfface_normal();
+		hmesh->_cut(p);
+	}
 
 	isMeshLoaded = true;
 

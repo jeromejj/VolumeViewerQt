@@ -108,7 +108,7 @@ void MainWindow::createActions()
 
 	rotationControl = new checkableAction(this);
 	rotationControl->setText(tr("&Light Control"));
-	rotationControl->setIcon(QIcon(":/icons/images/light.png"));
+	rotationControl->setIcon(QIcon(":/icons/images/rotation.png"));
 	rotationControl->setCheckable(true);
 	rotationControl->setChecked(true);
 	connect(rotationControl, SIGNAL(actionCheck()), viewer, SLOT(rotationViewOn()));

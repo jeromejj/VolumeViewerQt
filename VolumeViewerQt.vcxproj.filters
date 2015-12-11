@@ -109,15 +109,18 @@
     <CustomBuild Include="VolViewer.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\VMeshLib\core\bmp\RgbImage.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ViewerTFiberMesh.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="appIcon.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\VMeshLib\core\bmp\RgbImage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ViewerTFiberMesh.h">
+    <ClInclude Include="ViewerHMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

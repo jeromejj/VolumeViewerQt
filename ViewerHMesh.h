@@ -183,6 +183,8 @@ namespace VMeshLib
 			// normalize the hex mesh
 			void _normalize();
 
+			void _halfface_normal();
+
 			void _cut(CPlane & p);
 
 		public:
@@ -238,6 +240,27 @@ namespace VMeshLib
 		};
 
 		template<typename HXV, typename V, typename HE, typename HXE, typename E, typename HF, typename F, typename HX>
+		void CViewerHMesh<HXV, V, HE, HXE, E, HF, F, HX>::_halfface_normal()
+		{
+			for (std::list<HF*>::iterator hiter = m_pHalfFaces.begin(); hiter != m_pHalfFaces.end(); hiter++)
+			{
+				HF *pHF = *hiter;
+				HE *pHE = HalfFaceHalfEdge(pHF);
+				std::vector<CPoint> ps;
+				for (int k = 0; k < 4; k++)
+				{
+					ps.push_back(HalfEdgeTarget(pHE)->position());
+					pHE = HalfEdgeNext(pHE);
+				}
+				CPoint n0 = (ps[1] - ps[0]) ^ (ps[2] - ps[0]);
+				CPoint n1 = (ps[2] - ps[0]) ^ (ps[3] - ps[0]);
+				CPoint n = (n0 + n1) / 2;
+				n = n / n.norm();
+				pHF->normal() = n;
+			}
+		};
+
+		template<typename HXV, typename V, typename HE, typename HXE, typename E, typename HF, typename F, typename HX>
 		void CViewerHMesh<HXV, V, HE, HXE, E, HF, F, HX>::_cut(CPlane & p)
 		{
 
@@ -253,7 +276,7 @@ namespace VMeshLib
 				pV->outside() = (p.side(pos) >= 0);
 			}
 
-			for (std::list<HX*>::iterator tIter = m_pTets.begin(); tIter != m_pTets.end(); tIter++)
+			for (std::list<HX*>::iterator tIter = m_pHexs.begin(); tIter != m_pHexs.end(); tIter++)
 			{
 				HX * pT = *tIter;
 
@@ -290,8 +313,8 @@ namespace VMeshLib
 
 				if (pHF != NULL && pHFD != NULL)
 				{
-					T * pT_l = HalfFaceTet(pHF);
-					T * pT_r = HalfFaceTet(pHFD);
+					HX * pT_l = HalfFaceHex(pHF);
+					HX * pT_r = HalfFaceHex(pHFD);
 					if (pT_l->outside() != pT_r->outside())
 					{
 						m_cutFaces.push_back(pF);
@@ -320,7 +343,7 @@ namespace VMeshLib
 			{
 				HF * pF = *it;
 				HF * pD = HalfFaceDual(pF);
-				HX  * pT = HalfFaceTet(pF);
+				HX  * pT = HalfFaceHex(pF);
 
 				if (pD == NULL)
 				{
@@ -335,7 +358,7 @@ namespace VMeshLib
 					continue;
 				}
 
-				HX * pDT = HalfFaceTet(pD);
+				HX * pDT = HalfFaceHex(pD);
 
 				if (pT->outside() && !pDT->outside())
 				{
