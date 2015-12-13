@@ -12,7 +12,7 @@
 #include <string>
 
 #include "OpenGLHeader.h"
-#include "..\VMeshLib\core\bmp\RgbImage.h"
+#include "..\MeshLib\core\bmp\RgbImage.h"
 #include "ViewerTFiberMesh.h"
 #include "ViewerHMesh.h"
 
@@ -24,7 +24,7 @@
 #define W_EPSILON 2e-5
 #endif
 
-using namespace VMeshLib;
+using namespace MeshLib;
 
 enum class DRAW_MODE { NONE, POINTS, WIREFRAME, FLATLINES, FLAT, SMOOTH, TEXTURE, TEXTUREMODULATE, BOUNDARY, VECTOR };
 

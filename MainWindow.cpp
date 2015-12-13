@@ -42,11 +42,18 @@ void MainWindow::dropEvent(QDropEvent * e)
 		{
 			fExt = "f";
 		}
+		else if (filename.endsWith(".hm"))
+		{
+			fExt = "hm";
+		}
 		else
 		{
 			QMessageBox dragFileFailed;
-			dragFileFailed.setText("Illegal file type.");
+			QString fExtQ(fExt.c_str());
+			QString info = "Illegal File Type " + fExtQ.toUpper();
+			dragFileFailed.setText(info);
 			dragFileFailed.exec();
+			continue;
 		}
 
 		QString canonicalFilePath = QFileInfo(filename).canonicalFilePath();

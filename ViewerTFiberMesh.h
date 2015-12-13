@@ -3,13 +3,13 @@
 
 #include <stdio.h>
 
-#include "..\VMeshLib\core\TetMesh\BaseTMesh.h"
-#include "..\VMeshLib\core\TetMesh\titerators.h"
-#include "..\VMeshLib\core\Geometry\plane.h"
-#include "..\VMeshLib\core\Parser\strutil.h"
-#include "..\VMeshLib\core\Parser\parser.h"
+#include "..\MeshLib\core\TetMesh\BaseTMesh.h"
+#include "..\MeshLib\core\TetMesh\titerators.h"
+#include "..\MeshLib\core\Geometry\plane.h"
+#include "..\MeshLib\core\Parser\strutil.h"
+#include "..\MeshLib\core\Parser\parser.h"
 
-namespace VMeshLib
+namespace MeshLib
 { 
 	namespace TMeshLib
 	{

@@ -85,7 +85,7 @@
     <ClCompile Include="VolViewer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\VMeshLib\core\bmp\RgbImage.cpp">
+    <ClCompile Include="..\MeshLib\core\bmp\RgbImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -109,9 +109,6 @@
     <CustomBuild Include="VolViewer.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\VMeshLib\core\bmp\RgbImage.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="ViewerTFiberMesh.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
@@ -121,6 +118,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ViewerHMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MeshLib\core\bmp\RgbImage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

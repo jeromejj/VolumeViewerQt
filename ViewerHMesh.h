@@ -1,13 +1,13 @@
 #ifndef _VIEWER_HMESH_H_
 #define _VIEWER_HMESH_H_
 
-#include "..\VMeshLib\core\HexMesh\basehmesh.h"
-#include "..\VMeshLib\core\HexMesh\hiterators.h"
-#include "..\VMeshLib\core\Geometry\plane.h"
-#include "..\VMeshLib\core\Parser\strutil.h"
-#include "..\VMeshLib\core\Parser\parser.h"
+#include "..\MeshLib\core\HexMesh\basehmesh.h"
+#include "..\MeshLib\core\HexMesh\hiterators.h"
+#include "..\MeshLib\core\Geometry\plane.h"
+#include "..\MeshLib\core\Parser\strutil.h"
+#include "..\MeshLib\core\Parser\parser.h"
 
-namespace VMeshLib
+namespace MeshLib
 {
 	namespace HMeshLib
 	{
