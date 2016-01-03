@@ -209,7 +209,7 @@ void VolViewer::drawHalfFaces(std::vector<TMeshLib::CViewerHalfFace*> & HalfFace
 void VolViewer::drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces)
 {
 	glBindTexture(GL_TEXTURE_2D, texName);
-	
+
 	for (std::vector<HMeshLib::CHViewerHalfFace*>::iterator hfIter = HalfFaces.begin(); hfIter != HalfFaces.end(); hfIter++)
 	{
 		glBegin(GL_POLYGON);
@@ -228,19 +228,16 @@ void VolViewer::drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFac
 		for (HMeshLib::CVHMesh::HalfFaceVertexIterator fvIter(hmesh, pHF); !fvIter.end(); ++fvIter)
 		{
 			HMeshLib::CHViewerVertex * v = *fvIter;
-			std::cout << v->id() << " ";
 			CPoint pt = v->position();
-			std::cout << "(" << pt[0] << " " << pt[1] << " " << pt[2] << ")";
 			CPoint n = pHF->normal();
 			CPoint2 uv = v->uv();
 			glNormal3d(n[0], n[1], n[2]);
 			glTexCoord2d(uv[0], uv[1]);
 			glVertex3d(pt[0], pt[1], pt[2]);
 		}
-		std::cout << std::endl;
 		glEnd();
 	}
-	
+
 }
 
 void VolViewer::drawMeshPoints()
@@ -285,7 +282,7 @@ void VolViewer::drawMeshPoints()
 			glEnd();
 		}
 	}
-	
+
 }
 
 void VolViewer::drawSphere(CPoint center, double radius)
@@ -403,7 +400,7 @@ void VolViewer::drawMesh()
 		default:
 			break;
 		}
-		
+
 		drawSelectedVertex();
 		break;
 
@@ -447,7 +444,7 @@ void VolViewer::drawMesh()
 		default:
 			break;
 		}
-		
+
 		drawSelectedVertex();
 		break;
 
@@ -473,7 +470,7 @@ void VolViewer::drawMesh()
 		default:
 			break;
 		}
-		
+
 		break;
 
 	case DRAW_MODE::TEXTUREMODULATE:
@@ -492,7 +489,7 @@ void VolViewer::drawMesh()
 		default:
 			break;
 		}
-		
+
 		break;
 
 	case DRAW_MODE::VECTOR:
@@ -1112,21 +1109,55 @@ void VolViewer::quitSelectionCutFaceMode()
 void VolViewer::xCut()
 {
 	cutPlane = CPlane(CPoint(1, 0, 0), cutDistance);
-	mesh->_cut(cutPlane);
+	CPoint pNormal = cutPlane.normal();
+	double distance = cutPlane.d();
+	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
+	std::cout << "d=" << distance << std::endl;
+	if (meshVolType == VOLUME_TYPE::TET)
+	{
+		mesh->_cut(cutPlane);
+	}
+	else if (meshVolType == VOLUME_TYPE::HEX)
+	{
+		hmesh->_cut(cutPlane);
+	}
 	updateGL();
 }
 
 void VolViewer::yCut()
 {
 	cutPlane = CPlane(CPoint(0, 1, 0), cutDistance);
-	mesh->_cut(cutPlane);
+	CPoint pNormal = cutPlane.normal();
+	double distance = cutPlane.d();
+	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
+	std::cout << "d=" << distance << std::endl;
+	if (meshVolType == VOLUME_TYPE::TET)
+	{
+		mesh->_cut(cutPlane);
+	}
+	else if (meshVolType == VOLUME_TYPE::HEX)
+	{
+		hmesh->_cut(cutPlane);
+	}
+
 	updateGL();
 }
 
 void VolViewer::zCut()
 {
 	cutPlane = CPlane(CPoint(0, 0, 1), cutDistance);
-	mesh->_cut(cutPlane);
+	CPoint pNormal = cutPlane.normal();
+	double distance = cutPlane.d();
+	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
+	std::cout << "d=" << distance << std::endl;
+	if (meshVolType == VOLUME_TYPE::TET)
+	{
+		mesh->_cut(cutPlane);
+	}
+	else if (meshVolType == VOLUME_TYPE::HEX)
+	{
+		hmesh->_cut(cutPlane);
+	}
 	updateGL();
 }
 
@@ -1134,7 +1165,18 @@ void VolViewer::plusMove()
 {
 	cutDistance += 0.05;
 	cutPlane.d() = cutDistance;
-	mesh->_cut(cutPlane);
+	CPoint pNormal = cutPlane.normal();
+	double distance = cutPlane.d();
+	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
+	std::cout << "d=" << distance << std::endl;
+	if (meshVolType == VOLUME_TYPE::TET)
+	{
+		mesh->_cut(cutPlane);
+	}
+	else if (meshVolType == VOLUME_TYPE::HEX)
+	{
+		hmesh->_cut(cutPlane);
+	}
 	updateGL();
 }
 
@@ -1142,7 +1184,18 @@ void VolViewer::minusMove()
 {
 	cutDistance -= 0.05;
 	cutPlane.d() = cutDistance;
-	mesh->_cut(cutPlane);
+	CPoint pNormal = cutPlane.normal();
+	double distance = cutPlane.d();
+	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
+	std::cout << "d=" << distance << std::endl;
+	if (meshVolType == VOLUME_TYPE::TET)
+	{
+		mesh->_cut(cutPlane);
+	}
+	else if (meshVolType == VOLUME_TYPE::HEX)
+	{
+		hmesh->_cut(cutPlane);
+	}	
 	updateGL();
 }
 
