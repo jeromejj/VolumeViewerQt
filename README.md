@@ -10,3 +10,4 @@ A Viewer for 3-Dimensional Manifold
 - 64 bits
 - Requirements:
  - MeshLib of latest version
+ - Qt 5.3 and above installed
