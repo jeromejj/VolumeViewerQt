@@ -152,13 +152,33 @@ void VolViewer::paintGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
 
-	if (meshVolType == VOLUME_TYPE::FIBER)
+	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
-		glDisable(GL_LIGHTING);
-		drawFiber();
+		TMeshLib::CVTMesh * currentMesh = *tIter;
+
+		if (currentMesh->isFiber())
+		{
+			glDisable(GL_LIGHTING);
+			drawFiber(currentMesh);
+		}
+		else
+		{
+			if (isLightOn)
+			{
+				glEnable(GL_LIGHTING);
+			}
+			else
+			{
+				glDisable(GL_LIGHTING);
+			}
+			drawMesh(currentMesh);
+		}
 	}
-	else
+
+	for (std::vector<HMeshLib::CVHMesh*>::iterator tIter = hmeshlist.begin(); tIter != hmeshlist.end(); tIter++)
 	{
+		HMeshLib::CVHMesh * currenhmesh = *tIter;
+
 		if (isLightOn)
 		{
 			glEnable(GL_LIGHTING);
@@ -167,7 +187,7 @@ void VolViewer::paintGL()
 		{
 			glDisable(GL_LIGHTING);
 		}
-		drawMesh();
+		drawMesh(currenhmesh);
 	}
 
 	glPopMatrix();
@@ -240,49 +260,46 @@ void VolViewer::drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFac
 
 }
 
-void VolViewer::drawMeshPoints()
+void VolViewer::drawMeshPoints(TMeshLib::CVTMesh * mesh)
 {
-	if (meshVolType == VOLUME_TYPE::TET)
+	for (TMeshLib::CVTMesh::MeshVertexIterator vIter(mesh); !vIter.end(); vIter++)
 	{
-		for (TMeshLib::CVTMesh::MeshVertexIterator vIter(mesh); !vIter.end(); vIter++)
+		TMeshLib::CViewerVertex * pV = *vIter;
+		CPoint pos = pV->position();
+		glPointSize(6);
+		if (pV->selected())
 		{
-			TMeshLib::CViewerVertex * pV = *vIter;
-			CPoint pos = pV->position();
-			glPointSize(6);
-			if (pV->selected())
-			{
-				glColor3d(1.0, 0.2, 0.1);
-			}
-			else
-			{
-				glColor3d(1.0, 0.5, 0.0);
-			}
-			glBegin(GL_POINTS);
-			glVertex3d(pos[0], pos[1], pos[2]);
-			glEnd();
+			glColor3d(1.0, 0.2, 0.1);
 		}
-	}
-	else if (meshVolType == VOLUME_TYPE::HEX)
-	{
-		for (HMeshLib::CVHMesh::MeshVertexIterator vIter(hmesh); !vIter.end(); vIter++)
+		else
 		{
-			HMeshLib::CHViewerVertex * pV = *vIter;
-			CPoint pos = pV->position();
-			glPointSize(6);
-			if (pV->selected())
-			{
-				glColor3d(1.0, 0.2, 0.1);
-			}
-			else
-			{
-				glColor3d(1.0, 0.5, 0.0);
-			}
-			glBegin(GL_POINTS);
-			glVertex3d(pos[0], pos[1], pos[2]);
-			glEnd();
+			glColor3d(1.0, 0.5, 0.0);
 		}
+		glBegin(GL_POINTS);
+		glVertex3d(pos[0], pos[1], pos[2]);
+		glEnd();
 	}
+}
 
+void VolViewer::drawMeshPoints(HMeshLib::CVHMesh * hmesh)
+{
+	for (HMeshLib::CVHMesh::MeshVertexIterator vIter(hmesh); !vIter.end(); vIter++)
+	{
+		HMeshLib::CHViewerVertex * pV = *vIter;
+		CPoint pos = pV->position();
+		glPointSize(6);
+		if (pV->selected())
+		{
+			glColor3d(1.0, 0.2, 0.1);
+		}
+		else
+		{
+			glColor3d(1.0, 0.5, 0.0);
+		}
+		glBegin(GL_POINTS);
+		glVertex3d(pos[0], pos[1], pos[2]);
+		glEnd();
+	}
 }
 
 void VolViewer::drawSphere(CPoint center, double radius)
@@ -294,7 +311,7 @@ void VolViewer::drawSphere(CPoint center, double radius)
 	glTranslated(-center[0], -center[1], -center[2]);
 }
 
-void VolViewer::drawFiber()
+void VolViewer::drawFiber(TMeshLib::CVTMesh * mesh)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(matProjection);
@@ -337,7 +354,6 @@ void VolViewer::drawVector()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixd(matModelView);
 
-
 	glBegin(GL_LINES);
 
 	for (TMeshLib::CVTMesh::MeshTetIterator tIter(mesh); !tIter.end(); tIter++)
@@ -368,7 +384,7 @@ void VolViewer::drawVector()
 	glEnd();
 }
 
-void VolViewer::drawMesh()
+void VolViewer::drawMesh(HMeshLib::CVHMesh * mesh)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(matProjection);
@@ -381,122 +397,127 @@ void VolViewer::drawMesh()
 		break;
 
 	case DRAW_MODE::POINTS:
-		drawMeshPoints();
+		drawMeshPoints(mesh);
 		break;
 
 	case DRAW_MODE::WIREFRAME:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_LINE);
-		switch (meshVolType)
-		{
-		case VOLUME_TYPE::TET:
-			drawHalfFaces(mesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::HEX:
-			drawHalfFaces(hmesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::FIBER:
-			break;
-		default:
-			break;
-		}
-
-		drawSelectedVertex();
+		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::FLATLINES:
 		glDisable(GL_TEXTURE_2D);
-		switch (meshVolType)
-		{
-		case VOLUME_TYPE::TET:
-			glPolygonMode(GL_FRONT, GL_LINE);
-			drawHalfFaces(mesh->m_pHFaces_Above);
-			glPolygonMode(GL_FRONT, GL_FILL);
-			drawHalfFaces(mesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::HEX:
-			glPolygonMode(GL_FRONT, GL_LINE);
-			drawHalfFaces(hmesh->m_pHFaces_Above);
-			glPolygonMode(GL_FRONT, GL_FILL);
-			drawHalfFaces(hmesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::FIBER:
-			break;
-		default:
-			break;
-		}
-		drawSelectedVertex();
+		glPolygonMode(GL_FRONT, GL_LINE);
+		drawHalfFaces(mesh->m_pHFaces_Above);
+		glPolygonMode(GL_FRONT, GL_FILL);
+		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::FLAT:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_FILL);
-		switch (meshVolType)
-		{
-		case VOLUME_TYPE::TET:
-			drawHalfFaces(mesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::HEX:
-			drawHalfFaces(hmesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::FIBER:
-			break;
-		default:
-			break;
-		}
-
-		drawSelectedVertex();
+		drawHalfFaces(mesh->m_pHFaces_Below);
+		break;
+		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::BOUNDARY:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_FILL);
-		drawBoundaryHalfFaces();
+		drawBoundaryHalfFaces(mesh);
 		break;
 
 	case DRAW_MODE::TEXTURE:
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		switch (meshVolType)
-		{
-		case VOLUME_TYPE::TET:
-			drawHalfFaces(mesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::HEX:
-			drawHalfFaces(hmesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::FIBER:
-			break;
-		default:
-			break;
-		}
-
+		drawHalfFaces(hmesh->m_pHFaces_Below);
 		break;
 
 	case DRAW_MODE::TEXTUREMODULATE:
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		switch (meshVolType)
-		{
-		case VOLUME_TYPE::TET:
-			drawHalfFaces(mesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::HEX:
-			drawHalfFaces(hmesh->m_pHFaces_Below);
-			break;
-		case VOLUME_TYPE::FIBER:
-			break;
-		default:
-			break;
-		}
-
+		drawHalfFaces(mesh->m_pHFaces_Below);
 		break;
 
 	case DRAW_MODE::VECTOR:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		drawVector();
-		drawMeshPoints();
+		drawMeshPoints(mesh);
+		break;
+
+	default:
+		break;
+	}
+}
+
+
+void VolViewer::drawMesh(TMeshLib::CVTMesh * mesh)
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixd(matProjection);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixd(matModelView);
+
+	switch (meshDrawMode)
+	{
+	case DRAW_MODE::NONE:
+		break;
+
+	case DRAW_MODE::POINTS:
+		drawMeshPoints(mesh);
+		break;
+
+	case DRAW_MODE::WIREFRAME:
+		glDisable(GL_TEXTURE_2D);
+		glPolygonMode(GL_FRONT, GL_LINE);
+		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawSelectedVertex(mesh);
+		break;
+
+	case DRAW_MODE::FLATLINES:
+		glDisable(GL_TEXTURE_2D);
+		glPolygonMode(GL_FRONT, GL_LINE);
+		drawHalfFaces(mesh->m_pHFaces_Above);
+		glPolygonMode(GL_FRONT, GL_FILL);
+		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawSelectedVertex(mesh);
+		break;
+
+	case DRAW_MODE::FLAT:
+		glDisable(GL_TEXTURE_2D);
+		glPolygonMode(GL_FRONT, GL_FILL);
+		drawHalfFaces(mesh->m_pHFaces_Below);
+		break;
+		drawSelectedVertex(mesh);
+		break;
+
+	case DRAW_MODE::BOUNDARY:
+		glDisable(GL_TEXTURE_2D);
+		glPolygonMode(GL_FRONT, GL_FILL);
+		drawBoundaryHalfFaces(mesh);
+		break;
+
+	case DRAW_MODE::TEXTURE:
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		drawHalfFaces(hmesh->m_pHFaces_Below);
+		break;
+
+	case DRAW_MODE::TEXTUREMODULATE:
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		drawHalfFaces(mesh->m_pHFaces_Below);
+		break;
+
+	case DRAW_MODE::VECTOR:
+		glDisable(GL_TEXTURE_2D);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		drawVector();
+		drawMeshPoints(mesh);
 		break;
 
 	default:
@@ -542,7 +563,7 @@ void VolViewer::initTexture()
 	glEnable(GL_TEXTURE_2D);
 }
 
-void VolViewer::drawSelectedVertex()
+void VolViewer::drawSelectedVertex(TMeshLib::CVTMesh * mesh)
 {
 	for (TMeshLib::CVTMesh::MeshVertexIterator vIter(mesh); !vIter.end(); vIter++)
 	{
@@ -559,7 +580,24 @@ void VolViewer::drawSelectedVertex()
 	}
 }
 
-void VolViewer::drawBoundaryHalfFaces()
+void VolViewer::drawSelectedVertex(HMeshLib::CVHMesh * mesh)
+{
+	for (HMeshLib::CVHMesh::MeshVertexIterator vIter(mesh); !vIter.end(); vIter++)
+	{
+		HMeshLib::CHViewerVertex * pV = *vIter;
+		if (pV->selected())
+		{
+			CPoint pt = pV->position();
+			glPointSize(6);
+			glColor3f(0.0, 0.5, 1.0);
+			glBegin(GL_POINTS);
+			glVertex3d(pt[0], pt[1], pt[2]);
+			glEnd();
+		}
+	}
+}
+
+void VolViewer::drawBoundaryHalfFaces(TMeshLib::CVTMesh * mesh)
 {
 	std::vector<TMeshLib::CViewerHalfFace *> halffaceList = mesh->m_pHFaces_Below;
 	glBegin(GL_TRIANGLES);
@@ -573,6 +611,31 @@ void VolViewer::drawBoundaryHalfFaces()
 			for (TMeshLib::CVTMesh::HalfFaceVertexIterator fvIter(mesh, pHF); !fvIter.end(); ++fvIter)
 			{
 				TMeshLib::CViewerVertex * v = *fvIter;
+				CPoint pt = v->position();
+				CPoint n = pHF->normal();
+				CPoint2 uv = v->uv();
+				glNormal3d(n[0], n[1], n[2]);
+				glVertex3d(pt[0], pt[1], pt[2]);
+			}
+		}
+	}
+	glEnd();
+}
+
+void VolViewer::drawBoundaryHalfFaces(HMeshLib::CVHMesh * mesh)
+{
+	std::vector<HMeshLib::CHViewerHalfFace *> halffaceList = mesh->m_pHFaces_Below;
+	glBegin(GL_TRIANGLES);
+	for (std::vector<HMeshLib::CHViewerHalfFace*>::iterator iter = halffaceList.begin(); iter != halffaceList.end(); iter++)
+	{
+		HMeshLib::CHViewerHalfFace * pHF = *iter;
+		HMeshLib::CHViewerHalfFace * pHD = mesh->HalfFaceDual(pHF);
+		if (pHD == NULL)
+		{
+			glColor3f(1.0, 0.0, 0.0);
+			for (HMeshLib::CVHMesh::HalfFaceVertexIterator fvIter(mesh, pHF); !fvIter.end(); ++fvIter)
+			{
+				HMeshLib::CHViewerVertex * v = *fvIter;
 				CPoint pt = v->position();
 				CPoint n = pHF->normal();
 				CPoint2 uv = v->uv();
@@ -908,9 +971,11 @@ void VolViewer::translate(CPoint transVector)
 
 void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 {
+
+	VOLUME_TYPE currentVolType;
+
 	if (isMeshLoaded)
 	{
-		free(mesh);
 		mesh = new TMeshLib::CVTMesh();
 		hmesh = new HMeshLib::CVHMesh();
 	}
@@ -918,19 +983,22 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 	if (fileExt == "tet")
 	{
 		mesh->_load(meshfile);
-		meshVolType = VOLUME_TYPE::TET;
+		tmeshlist.push_back(mesh);
+		currentVolType = VOLUME_TYPE::TET;
 	}
 
 	if (fileExt == "hm")
 	{
 		hmesh->_load_hm(meshfile);
-		meshVolType = VOLUME_TYPE::HEX;
+		hmeshlist.push_back(hmesh);
+		currentVolType = VOLUME_TYPE::HEX;
 	}
 
 	if (fileExt == "t")
 	{
 		mesh->_load_t(meshfile);
-		meshVolType = VOLUME_TYPE::TET;
+		tmeshlist.push_back(mesh);
+		currentVolType = VOLUME_TYPE::TET;
 	}
 
 	if (fileExt == "f")
@@ -939,10 +1007,9 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 		fiberMinLength = QInputDialog::getInt(this, tr("Input the minimal length of fibers to draw"), tr("Minimal Fiber Length"), 0, 0, INT_MAX, 1, &ok);
 		{
 			mesh->_load_f(meshfile);
-			meshVolType = VOLUME_TYPE::FIBER;
-			updateGL();
+			tmeshlist.push_back(mesh);
+			currentVolType = VOLUME_TYPE::FIBER;
 		}
-		return;
 	}
 
 	// read in traits
@@ -968,13 +1035,13 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 
 	CPlane p(CPoint(0.0, 0.0, 1.0), 0.0);
 
-	if (meshVolType == VOLUME_TYPE::TET)
+	if (currentVolType == VOLUME_TYPE::TET)
 	{
 		mesh->_normalize();
 		mesh->_halfface_normal();
 		mesh->_cut(p);
 	}
-	else if (meshVolType == VOLUME_TYPE::HEX)
+	else if (currentVolType == VOLUME_TYPE::HEX)
 	{
 		hmesh->_normalize();
 		hmesh->_halfface_normal();
@@ -996,31 +1063,41 @@ void VolViewer::loadFromMainWin(std::string outFilename, std::string outExt)
 
 void VolViewer::openMesh()
 {
-	filename = QFileDialog::getOpenFileName(this,
-		tr("Open Tetrahedra meshes"),
-		tr("../models/"),
-		tr("HM Files (*.hm);;"
-		"TET Files (*.tet);;"
-		"T Files (*.t);;"
-		"F Files(*.f)"));
-	QFileInfo * fileInfo = new QFileInfo(filename);
-	QString fileExt = fileInfo->suffix();
-	QString canonicalFilePath = fileInfo->canonicalFilePath();
-	std::string sFileExt = fileExt.toStdString();
-	if (!filename.isEmpty())
-	{
-		QByteArray byteArray = filename.toUtf8();
-		const char * _filename = byteArray.constData();
-		sFilename = filename.toStdString();
-		loadFile(_filename, sFileExt);
 
-		foreach(QWidget *widget, qApp->topLevelWidgets())
+	filenames = QFileDialog::getOpenFileNames(this,
+		tr("Open volume meshes"),
+		tr("./"),
+		tr("Hex Mesh (*.hm);;"
+		"Tet Mesh (*.tet *t);;"
+		"Fiber (*.f)"));
+
+
+	QString windowTitle = "VolumeViewerQt - ";
+
+	for (QStringList::iterator sIter = filenames.begin(); sIter != filenames.end(); sIter++)
+	{
+		filename = *sIter;
+		QFileInfo * fileInfo = new QFileInfo(filename);
+		QString fileExt = fileInfo->suffix();
+		QString canonicalFilePath = fileInfo->canonicalFilePath();
+		std::string sFileExt = fileExt.toStdString();
+		if (!filename.isEmpty())
 		{
-			MainWindow * mainWin = qobject_cast<MainWindow*>(widget);
-			QString title = "VolViewerQt - " + canonicalFilePath;
-			mainWin->setWindowTitle(title);
+			QByteArray byteArray = filename.toUtf8();
+			const char * _filename = byteArray.constData();
+			sFilename = filename.toStdString();
+			loadFile(_filename, sFileExt);
+
+			windowTitle += canonicalFilePath;
 		}
 	}
+
+	foreach(QWidget *widget, qApp->topLevelWidgets())
+	{
+		MainWindow * mainWin = qobject_cast<MainWindow*>(widget);
+		mainWin->setWindowTitle(windowTitle);
+	}
+
 }
 
 void VolViewer::openTexture()
@@ -1195,7 +1272,7 @@ void VolViewer::minusMove()
 	else if (meshVolType == VOLUME_TYPE::HEX)
 	{
 		hmesh->_cut(cutPlane);
-	}	
+	}
 	updateGL();
 }
 
