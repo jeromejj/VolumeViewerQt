@@ -1061,6 +1061,22 @@ void VolViewer::loadFromMainWin(std::string outFilename, std::string outExt)
 	loadFile(_filename, outExt);
 }
 
+void VolViewer::newScene()
+{
+	tmeshlist.clear();
+	hmeshlist.clear();
+
+	QString windowTitle = "VolumeViewerQt";
+
+	foreach(QWidget *widget, qApp->topLevelWidgets())
+	{
+		MainWindow * mainWin = qobject_cast<MainWindow*>(widget);
+		mainWin->setWindowTitle(windowTitle);
+	}
+
+	updateGL();
+}
+
 void VolViewer::openMesh()
 {
 
@@ -1088,7 +1104,7 @@ void VolViewer::openMesh()
 			sFilename = filename.toStdString();
 			loadFile(_filename, sFileExt);
 
-			windowTitle += canonicalFilePath;
+			windowTitle += canonicalFilePath + "; ";
 		}
 	}
 

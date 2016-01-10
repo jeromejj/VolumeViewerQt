@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/icons">
+    <file>images/new.png</file>
     <file>images/open.png</file>
     <file>images/save.png</file>
     <file>images/points.png</file>

@@ -48,6 +48,8 @@ public:
 	void loadFromMainWin(std::string, std::string);
 
 public slots:
+
+	void newScene();
 	void openMesh();
 	void openTexture();
 	void saveMesh();

@@ -65,6 +65,12 @@ void MainWindow::dropEvent(QDropEvent * e)
 
 void MainWindow::createActions()
 {
+	newAction = new QAction(tr("&New"), this);
+	newAction->setIcon(QIcon(":/icons/images/new.png"));
+	newAction->setShortcut(QKeySequence::New);
+	newAction->setStatusTip(tr("New and reset the scene."));
+	connect(newAction, SIGNAL(triggered()), viewer, SLOT(newScene()));
+
 	openAction = new QAction(tr("&Open"), this);
 	openAction->setIcon(QIcon(":/icons/images/open.png"));
 	openAction->setShortcut(QKeySequence::Open);
@@ -223,6 +229,7 @@ void MainWindow::createActions()
 void MainWindow::createToolbar()
 {
 	fileToolbar = addToolBar(tr("&File"));
+	fileToolbar->addAction(newAction);
 	fileToolbar->addAction(openAction);
 	fileToolbar->addAction(saveAction);
 	

@@ -28,6 +28,7 @@ private:
 
 	VolViewer * viewer;
 
+	QAction * newAction;
 	QAction * openAction;
 	QAction * saveAction;
 
