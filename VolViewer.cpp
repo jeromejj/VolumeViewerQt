@@ -1206,12 +1206,16 @@ void VolViewer::xCut()
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	if (meshVolType == VOLUME_TYPE::TET)
+	
+	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
-		mesh->_cut(cutPlane);
+		TMeshLib::CVTMesh * tmesh = *tIter;
+		tmesh->_cut(cutPlane);
 	}
-	else if (meshVolType == VOLUME_TYPE::HEX)
+
+	for (std::vector<HMeshLib::CVHMesh*>::iterator hIter = hmeshlist.begin(); hIter != hmeshlist.end(); hIter++)
 	{
+		HMeshLib::CVHMesh * hmesh = *hIter;
 		hmesh->_cut(cutPlane);
 	}
 	updateGL();
@@ -1224,12 +1228,16 @@ void VolViewer::yCut()
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	if (meshVolType == VOLUME_TYPE::TET)
+	
+	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
-		mesh->_cut(cutPlane);
+		TMeshLib::CVTMesh * tmesh = *tIter;
+		tmesh->_cut(cutPlane);
 	}
-	else if (meshVolType == VOLUME_TYPE::HEX)
+
+	for (std::vector<HMeshLib::CVHMesh*>::iterator hIter = hmeshlist.begin(); hIter != hmeshlist.end(); hIter++)
 	{
+		HMeshLib::CVHMesh * hmesh = *hIter;
 		hmesh->_cut(cutPlane);
 	}
 
@@ -1243,14 +1251,19 @@ void VolViewer::zCut()
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	if (meshVolType == VOLUME_TYPE::TET)
+	
+	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
-		mesh->_cut(cutPlane);
+		TMeshLib::CVTMesh * tmesh = *tIter;
+		tmesh->_cut(cutPlane);
 	}
-	else if (meshVolType == VOLUME_TYPE::HEX)
+
+	for (std::vector<HMeshLib::CVHMesh*>::iterator hIter = hmeshlist.begin(); hIter != hmeshlist.end(); hIter++)
 	{
+		HMeshLib::CVHMesh * hmesh = *hIter;
 		hmesh->_cut(cutPlane);
 	}
+
 	updateGL();
 }
 
@@ -1262,14 +1275,19 @@ void VolViewer::plusMove()
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	if (meshVolType == VOLUME_TYPE::TET)
+
+	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
-		mesh->_cut(cutPlane);
+		TMeshLib::CVTMesh * tmesh = *tIter;
+		tmesh->_cut(cutPlane);
 	}
-	else if (meshVolType == VOLUME_TYPE::HEX)
+
+	for (std::vector<HMeshLib::CVHMesh*>::iterator hIter = hmeshlist.begin(); hIter != hmeshlist.end(); hIter++)
 	{
+		HMeshLib::CVHMesh * hmesh = *hIter;
 		hmesh->_cut(cutPlane);
 	}
+
 	updateGL();
 }
 
@@ -1281,14 +1299,19 @@ void VolViewer::minusMove()
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	if (meshVolType == VOLUME_TYPE::TET)
+	
+	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
-		mesh->_cut(cutPlane);
+		TMeshLib::CVTMesh * tmesh = *tIter;
+		tmesh->_cut(cutPlane);
 	}
-	else if (meshVolType == VOLUME_TYPE::HEX)
+
+	for (std::vector<HMeshLib::CVHMesh*>::iterator hIter = hmeshlist.begin(); hIter != hmeshlist.end(); hIter++)
 	{
+		HMeshLib::CVHMesh * hmesh = *hIter;
 		hmesh->_cut(cutPlane);
 	}
+
 	updateGL();
 }
 
