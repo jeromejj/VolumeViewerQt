@@ -41,13 +41,10 @@ QSize VolViewer::sizeHint() const
 {
 	QRect rectangle = QApplication::desktop()->screenGeometry();
 	return QSize(int(rectangle.width()*0.96), int(rectangle.height()));
-	std::cout << "sizeHint" << std::endl;
 }
 
 void VolViewer::resizeGL(int width, int height)
 {
-	std::cout << "resizing...." << std::endl;
-	std::cout << "width " << width << "height " << height << std::endl;
 	glViewport(0, 0, width, height);
 	glGetIntegerv(GL_VIEWPORT, viewPort);
 	updateProjectionMatrix();
@@ -147,7 +144,6 @@ void VolViewer::makeWholeSceneVisible()
 
 void VolViewer::paintGL()
 {
-	std::cout << "paintGL" << std::endl;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
@@ -813,13 +809,10 @@ void VolViewer::mouseMoveEvent(QMouseEvent * mouseEvent)
 		switch (mouseButton)
 		{
 		case Qt::LeftButton:
-			// debug output
-			std::cout << "Mouse Left Moving..." << std::endl;
 			// rotate the view
 			rotationView(newMousePos);
 			break;
 		case Qt::RightButton:
-			std::cout << "Mouse Right Moving..." << std::endl;
 			// translate the view
 			translateView(newMousePos);
 			break;
@@ -853,7 +846,6 @@ void VolViewer::wheelEvent(QWheelEvent * mouseEvent)
 
 bool VolViewer::arcball(QPoint screenPos, CPoint &new3Dpos)
 {
-	std::cout << "arcball" << std::endl;
 	double x = (2.0 * screenPos.x() - width()) / (double)width();
 	double y = -(2.0 * screenPos.y() - height()) / (double)height();
 	double norm = x * x + y * y;
@@ -879,7 +871,6 @@ bool VolViewer::arcball(QPoint screenPos, CPoint &new3Dpos)
 
 void VolViewer::rotationView(QPoint newPos)
 {
-	std::cout << "rotationView" << std::endl;
 	CPoint new3DPos;
 	bool isNewPosHitArcball = arcball(newPos, new3DPos);
 	if (isNewPosHitArcball)
@@ -921,7 +912,6 @@ void VolViewer::rotationView(QPoint newPos)
 
 void VolViewer::rotate(CPoint axis, double angle)
 {
-	std::cout << "rotate" << std::endl;
 	GLdouble translation0 = matModelView[0] * center[0] + matModelView[4] * center[1] + matModelView[8] * center[2] + matModelView[12];
 	GLdouble translation1 = matModelView[1] * center[0] + matModelView[5] * center[1] + matModelView[9] * center[2] + matModelView[13];
 	GLdouble translation2 = matModelView[2] * center[0] + matModelView[6] * center[1] + matModelView[10] * center[2] + matModelView[14];
@@ -1135,6 +1125,40 @@ void VolViewer::openTexture()
 		texture->LoadBmpFile(_filename);
 		isTextureLoaded = true;
 	}
+}
+
+void VolViewer::screenshot()
+{
+	GLfloat * buffer = new GLfloat[width() * height() * 3];
+	glReadBuffer(GL_FRONT_LEFT);
+	glReadPixels(0, 0, width(), height(), GL_RGB, GL_FLOAT, buffer);
+
+	RgbImage image(height(), width());
+
+	for (int i = 0; i < height(); i++)
+	{
+		for (int j = 0; j < width(); j++)
+		{
+			float r = buffer[(i * width() + j) * 3 + 0];
+			float g = buffer[(i * width() + j) * 3 + 1];
+			float b = buffer[(i * width() + j) * 3 + 2];
+
+			image.SetRgbPixelf(i, j, r, g, b);
+		}
+	}
+
+	delete[]buffer;
+
+	QFileInfo * fileInfo = new QFileInfo(filename);
+	QString path = fileInfo->canonicalPath();
+
+	QTime time = QTime::currentTime();
+	QString currTime = time.toString(QString("hh_mm_ss_zzz"));
+	QString currTime2 = time.toString(QString("hh:mm:ss.zzz"));
+	std::string imageName = path.toStdString() + "/ScreenShot_" + currTime.toStdString() + ".bmp";
+	image.WriteBmpFile(imageName.c_str());
+
+	std::cout << "Screenshot taken on " + currTime2.toStdString() << std::endl;
 }
 
 void VolViewer::saveMesh()

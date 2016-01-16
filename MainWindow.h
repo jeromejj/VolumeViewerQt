@@ -31,6 +31,7 @@ private:
 	QAction * newAction;
 	QAction * openAction;
 	QAction * saveAction;
+	QAction * screenshotAction;
 
 	checkableAction * lightControl;
 	checkableAction * rotationControl;

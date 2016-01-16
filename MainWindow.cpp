@@ -83,6 +83,12 @@ void MainWindow::createActions()
 	saveAction->setStatusTip(tr("save a mesh file"));
 	connect(saveAction, SIGNAL(triggered()), viewer, SLOT(saveMesh()));
 
+	screenshotAction = new QAction(tr("&Screenshot"), this);
+	screenshotAction->setIcon(QIcon(":/icons/images/screenshot.png"));
+	screenshotAction->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_4));
+	screenshotAction->setStatusTip(tr("Save the screenshot"));
+	connect(screenshotAction, SIGNAL(triggered()), viewer, SLOT(screenshot()));
+
 	selectAction = new checkableAction(this);
 	selectAction->setIcon(QIcon(":/icons/images/select.png"));
 	selectAction->setText(tr("Select Vertices"));
@@ -232,6 +238,7 @@ void MainWindow::createToolbar()
 	fileToolbar->addAction(newAction);
 	fileToolbar->addAction(openAction);
 	fileToolbar->addAction(saveAction);
+	fileToolbar->addAction(screenshotAction);
 	
 	editToolbar = addToolBar(tr("&Edit"));
 	editToolbar->addAction(selectAction);

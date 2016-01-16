@@ -53,6 +53,7 @@ public slots:
 	void openMesh();
 	void openTexture();
 	void saveMesh();
+	void screenshot();
 	void enterSelectionMode();
 	void quitSelectionMode();
 
