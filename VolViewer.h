@@ -87,11 +87,15 @@ private:
 	QSize sizeHint() const;
 	void resizeGL(int, int);
 
-	void setScene(CPoint scenePosCenter, GLdouble sceneRadius);
+	void setScene();
 	void updateProjectionMatrix();
 	void makeWholeSceneVisible();
+	void getGLMatrix();
 
 	void paintGL();
+
+	void computeBoundingSphere();
+
 	void drawMesh(TMeshLib::CVTMesh * tmesh);
 	void drawMesh(HMeshLib::CVHMesh * hmesh);
 
@@ -116,8 +120,6 @@ private:
 
 	void drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces);
 
-	float zNear() { return 0.01 * radius; }
-	float zFar() { return 100 * radius; }
 	float fovy() const { return 45.0f; }
 
 	void mousePressEvent(QMouseEvent * mouseEvent);
@@ -139,6 +141,17 @@ private:
 
 private:
 
+	float zNear;
+	float zFar;
+
+	double x_mid = 0;
+	double y_mid = 0;
+	double z_mid = 0;
+
+	double x_perCutDistance = 0.05;
+	double y_perCutDistance = 0.05;
+	double z_perCutDistance = 0.05;
+	
 	bool isSelectionMode;
 	bool isSelectionCutFaceMode;
 

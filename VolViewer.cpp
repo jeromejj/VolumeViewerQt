@@ -31,7 +31,7 @@ void VolViewer::init()
 	setAttribute(Qt::WA_NoSystemBackground, true);
 	setFocusPolicy(Qt::StrongFocus);
 	center = CPoint(0.0, 0.0, 0.0);
-	radius = 0.0;
+	radius = 1.0;
 	trackballRadius = 0.6;
 	isMeshLoaded = false;
 	meshDrawMode = DRAW_MODE::NONE;
@@ -51,12 +51,17 @@ void VolViewer::resizeGL(int width, int height)
 	updateGL();
 }
 
-void VolViewer::initializeGL()
+void VolViewer::getGLMatrix()
 {
-	// get the projection and modelview matrix
 	glGetDoublev(GL_PROJECTION_MATRIX, matProjection);
 	glGetDoublev(GL_MODELVIEW_MATRIX, matModelView);
 	glGetIntegerv(GL_VIEWPORT, viewPort);
+}
+
+void VolViewer::initializeGL()
+{
+	// get the projection and modelview matrix
+	getGLMatrix();
 
 	GLfloat lightOneColor[] = { 1, 1, 1, 1 };
 	GLfloat globalAmb[] = { .1f, .1f, .1f, 1.0f };
@@ -91,16 +96,13 @@ void VolViewer::initializeGL()
 	glLightfv(GL_LIGHT2, GL_POSITION, lightTwoPosition);
 	glLightfv(GL_LIGHT3, GL_POSITION, lightThreePosition);
 
-	setScene(center, 1.0);
+	setScene();
 }
 
-void VolViewer::setScene(CPoint scenePosCenter, GLdouble sceneRadius)
+void VolViewer::setScene()
 {
-	center = scenePosCenter;
-	radius = sceneRadius;
-
-	updateProjectionMatrix();
 	makeWholeSceneVisible();
+	updateProjectionMatrix();
 }
 
 void VolViewer::setDrawMode(DRAW_MODE drawMode)
@@ -120,31 +122,132 @@ void VolViewer::updateProjectionMatrix()
 	makeCurrent();
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	std::cout << "width " << width() << " height " << height() << std::endl;
-	gluPerspective(fovy(), (GLdouble)width() / (GLdouble)height(), 0.01 * radius, 100.0 * radius);
-	glGetDoublev(GL_PROJECTION_MATRIX, matProjection);
-	glGetDoublev(GL_MODELVIEW_MATRIX, matModelView);
+	gluPerspective(fovy(), (GLdouble)width() / (GLdouble)height(), 0.001 * radius * 2, 100.0 * radius);
 }
 
 void VolViewer::makeWholeSceneVisible()
 {
-	// update scene model view matrix
-	GLdouble translation0 = matModelView[0] * center[0] + matModelView[4] * center[1] + matModelView[8] * center[2] + matModelView[12];
-	GLdouble translation1 = matModelView[1] * center[0] + matModelView[5] * center[1] + matModelView[9] * center[2] + matModelView[13];
-	GLdouble translation2 = matModelView[2] * center[0] + matModelView[6] * center[1] + matModelView[10] * center[2] + matModelView[14] + 3.0*radius;
-	CPoint transVector = CPoint(-translation0, -translation1, -translation2);
-	// change matrix and translation
 	makeCurrent();
+
+	float diam = radius * 2;
+	zNear = 0.001 * diam;
+	zFar = diam;
+
+	GLfloat left = center[0] - diam;
+	GLfloat right = center[0] + diam;
+	GLfloat bottom = center[1] - diam;
+	GLfloat top = center[1] + diam;
+
+	GLfloat aspect = (GLfloat)width() / (GLfloat)height();
+	if (aspect < 1.0)
+	{
+		bottom /= aspect;
+		top /= aspect;
+	}
+	else
+	{
+		left *= aspect;
+		right *= aspect;
+	}
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(left, right, bottom, top, zNear, zFar);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslated(transVector[0], transVector[1], transVector[2]);
-	glMultMatrixd(matModelView);
-	glGetDoublev(GL_MODELVIEW_MATRIX, matModelView);
+
+	gluLookAt(center[0], center[1], 1.5 * diam, center[0], center[1], center[2], 0.0, 1.0, 0.0);
+
+}
+
+void VolViewer::computeBoundingSphere()
+{
+
+	center = CPoint(0, 0, 0);
+	int numVert = 0;
+	double x_min, x_max, y_min, y_max, z_min, z_max;
+	x_min = y_min = z_min = 1e+30;
+	x_max = y_max = z_max = -1e+30;
+	
+	for (size_t t = 0; t < tmeshlist.size(); t++)
+	{
+		TMeshLib::CVTMesh * tmesh = tmeshlist[t];
+		for (TMeshLib::CVTMesh::MeshVertexIterator vIter(tmesh); !vIter.end(); vIter++)
+		{
+			TMeshLib::CVertex * pV = *vIter;
+			center += pV->position();
+			CPoint p = pV->position();
+			x_min = (x_min > p[0]) ? p[0] : x_min;
+			x_max = (x_max < p[0]) ? p[0] : x_max;
+			y_min = (y_min > p[1]) ? p[1] : y_min;
+			y_max = (y_max < p[1]) ? p[1] : y_max;
+			z_min = (z_min > p[2]) ? p[2] : z_min;
+			z_max = (z_max < p[2]) ? p[2] : z_max;
+			numVert++;
+		}
+	}
+
+	for (size_t h = 0; h < hmeshlist.size(); h++)
+	{
+		HMeshLib::CVHMesh * hmesh = hmeshlist[h];
+		for (HMeshLib::CVHMesh::MeshVertexIterator vIter(hmesh); !vIter.end(); vIter++)
+		{
+			HMeshLib::CVertex * pV = *vIter;
+			center += pV->position();
+			CPoint p = pV->position();
+			x_min = (x_min > p[0]) ? p[0] : x_min;
+			x_max = (x_max < p[0]) ? p[0] : x_max;
+			y_min = (y_min > p[1]) ? p[1] : y_min;
+			y_max = (y_max < p[1]) ? p[1] : y_max;
+			z_min = (z_min > p[2]) ? p[2] : z_min;
+			z_max = (z_max < p[2]) ? p[2] : z_max;
+			numVert++;
+		}
+	}
+
+	x_mid = (x_min + x_max) / 2.0;
+	y_mid = (y_min + y_max) / 2.0;
+	z_mid = (z_min + z_max) / 2.0;
+
+	x_perCutDistance = (x_max - x_min) / 30.0;
+	y_perCutDistance = (y_max - y_min) / 30.0;
+	z_perCutDistance = (z_max - z_min) / 30.0;
+
+	center /= numVert;
+	
+	double maxDist = 0;
+
+	for (size_t t = 0; t < tmeshlist.size(); t++)
+	{
+		TMeshLib::CVTMesh * tmesh = tmeshlist[t];
+		for (TMeshLib::CVTMesh::MeshVertexIterator vIter(tmesh); !vIter.end(); vIter++)
+		{
+			TMeshLib::CVertex * pV = *vIter;
+			CPoint p = pV->position();
+			double distance = (p - center).norm();
+			maxDist = (maxDist < distance) ? distance : maxDist;
+		}
+	}
+
+	for (size_t h = 0; h < hmeshlist.size(); h++)
+	{
+		HMeshLib::CVHMesh * hmesh = hmeshlist[h];
+		for (HMeshLib::CVHMesh::MeshVertexIterator vIter(hmesh); !vIter.end(); vIter++)
+		{
+			HMeshLib::CVertex * pV = *vIter;
+			CPoint p = pV->position();
+			double distance = (p - center).norm();
+			maxDist = (maxDist < distance) ? distance : maxDist;
+		}
+	}
+
+	radius = maxDist;
+
+	setScene();
 }
 
 void VolViewer::paintGL()
 {
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
 
@@ -309,6 +412,9 @@ void VolViewer::drawSphere(CPoint center, double radius)
 
 void VolViewer::drawFiber(TMeshLib::CVTMesh * mesh)
 {
+
+	getGLMatrix();
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(matProjection);
 	glMatrixMode(GL_MODELVIEW);
@@ -344,6 +450,8 @@ void VolViewer::drawFiber(TMeshLib::CVTMesh * mesh)
 
 void VolViewer::drawVector()
 {
+
+	getGLMatrix();
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(matProjection);
@@ -382,6 +490,9 @@ void VolViewer::drawVector()
 
 void VolViewer::drawMesh(HMeshLib::CVHMesh * mesh)
 {
+
+	getGLMatrix();
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(matProjection);
 	glMatrixMode(GL_MODELVIEW);
@@ -453,6 +564,8 @@ void VolViewer::drawMesh(HMeshLib::CVHMesh * mesh)
 
 void VolViewer::drawMesh(TMeshLib::CVTMesh * mesh)
 {
+	getGLMatrix();
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixd(matProjection);
 	glMatrixMode(GL_MODELVIEW);
@@ -784,9 +897,7 @@ CPoint VolViewer::getRayVector(QPoint point, CPoint & nearPt, CPoint & farPt)
 	GLdouble objNearX, objNearY, objNearZ;
 	GLdouble objFarX, objFarY, objFarZ;
 
-	glGetDoublev(GL_MODELVIEW_MATRIX, matModelView);
-	glGetDoublev(GL_PROJECTION_MATRIX, matProjection);
-	glGetIntegerv(GL_VIEWPORT, viewPort);
+	getGLMatrix();
 
 	gluUnProject(mousePosX, mousePosY, 0.0, matModelView, matProjection, viewPort, &objNearX, &objNearY, &objNearZ);
 	gluUnProject(mousePosX, mousePosY, 1.0, matModelView, matProjection, viewPort, &objFarX, &objFarY, &objFarZ);
@@ -912,6 +1023,9 @@ void VolViewer::rotationView(QPoint newPos)
 
 void VolViewer::rotate(CPoint axis, double angle)
 {
+
+	getGLMatrix();
+
 	GLdouble translation0 = matModelView[0] * center[0] + matModelView[4] * center[1] + matModelView[8] * center[2] + matModelView[12];
 	GLdouble translation1 = matModelView[1] * center[0] + matModelView[5] * center[1] + matModelView[9] * center[2] + matModelView[13];
 	GLdouble translation2 = matModelView[2] * center[0] + matModelView[6] * center[1] + matModelView[10] * center[2] + matModelView[14];
@@ -934,15 +1048,16 @@ void VolViewer::rotate(CPoint axis, double angle)
 // translate the view
 void VolViewer::translateView(QPoint newPos)
 {
+	getGLMatrix();
 
 	double zVal = -(matModelView[2] * center[0] + matModelView[6] * center[1] + matModelView[10] * center[2] + matModelView[14]) /
 		(matModelView[3] * center[0] + matModelView[7] * center[1] + matModelView[11] * center[2] + matModelView[15]);
 	double screenAspect = width() / height();
-	double top = tan(fovy() / 2.0f * PI / 180.0f) * zNear();
+	double top = tan(fovy() / 2.0f * PI / 180.0f) * zNear;
 	double right = screenAspect * top;
 	QPoint posDiff = latestMousePos - newPos;
-	CPoint transVector = CPoint(2.0*posDiff.x() / width() * right / zNear() * zVal,
-		-2.0*posDiff.y() / height() * top / zNear() * zVal,
+	CPoint transVector = CPoint(2.0*posDiff.x() / width() * right / zNear * zVal,
+		-2.0*posDiff.y() / height() * top / zNear * zVal,
 		0.0f);
 
 	translate(transVector);
@@ -951,6 +1066,8 @@ void VolViewer::translateView(QPoint newPos)
 
 void VolViewer::translate(CPoint transVector)
 {
+
+	getGLMatrix();
 
 	makeCurrent();
 	glLoadIdentity();
@@ -963,6 +1080,7 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 {
 
 	VOLUME_TYPE currentVolType;
+
 
 	if (isMeshLoaded)
 	{
@@ -1023,20 +1141,20 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 
 	meshDrawMode = DRAW_MODE::FLAT;
 
-	CPlane p(CPoint(0.0, 0.0, 1.0), 0.0);
+	computeBoundingSphere();
 
-	for (size_t t = 0; t < tmeshlist.size(); t++)
+	CPlane p(CPoint(0.0, 0.0, 1), z_mid);
+	cutDistance = z_mid;
+
+	if (currentVolType == VOLUME_TYPE::TET)
 	{
-		TMeshLib::CVTMesh * tmesh = tmeshlist[t];
-		tmesh->_normalize();
+		TMeshLib::CVTMesh * tmesh = tmeshlist[tmeshlist.size() - 1];
 		tmesh->_halfface_normal();
 		tmesh->_cut(p);
 	}
-	
-	for (size_t h = 0; h < hmeshlist.size(); h++)
+	else if (currentVolType == VOLUME_TYPE::HEX)
 	{
-		HMeshLib::CVHMesh * hmesh = hmeshlist[h];
-		hmesh->_normalize();
+		HMeshLib::CVHMesh * hmesh = hmeshlist[hmeshlist.size() - 1];
 		hmesh->_halfface_normal();
 		hmesh->_cut(p);
 	}
@@ -1250,7 +1368,8 @@ void VolViewer::quitSelectionCutFaceMode()
 
 void VolViewer::xCut()
 {
-	cutPlane = CPlane(CPoint(1, 0, 0), cutDistance);
+	cutDistance = x_mid;
+	cutPlane = CPlane(CPoint(1.0, 0, 0), cutDistance);
 	CPoint pNormal = cutPlane.normal();
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
@@ -1272,7 +1391,8 @@ void VolViewer::xCut()
 
 void VolViewer::yCut()
 {
-	cutPlane = CPlane(CPoint(0, 1, 0), cutDistance);
+	cutDistance = y_mid;
+	cutPlane = CPlane(CPoint(0, 1.0, 0), cutDistance);
 	CPoint pNormal = cutPlane.normal();
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
@@ -1295,7 +1415,8 @@ void VolViewer::yCut()
 
 void VolViewer::zCut()
 {
-	cutPlane = CPlane(CPoint(0, 0, 1), cutDistance);
+	cutDistance = z_mid;
+	cutPlane = CPlane(CPoint(0, 0, 1.0), cutDistance);
 	CPoint pNormal = cutPlane.normal();
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
@@ -1318,10 +1439,23 @@ void VolViewer::zCut()
 
 void VolViewer::plusMove()
 {
-	cutDistance += 0.05;
-	cutPlane.d() = cutDistance;
 	CPoint pNormal = cutPlane.normal();
+	if (pNormal * CPoint(1, 0, 0) != 0.0)
+	{
+		cutDistance += x_perCutDistance;
+	}
+	else if (pNormal * CPoint(0, 1, 0) != 0.0)
+	{
+		cutDistance += y_perCutDistance;
+	}
+	else if (pNormal * CPoint(0, 0, 1) != 0.0)
+	{
+		cutDistance += z_perCutDistance;
+	}
+
+	cutPlane.d() = cutDistance;
 	double distance = cutPlane.d();
+
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
 
@@ -1342,10 +1476,23 @@ void VolViewer::plusMove()
 
 void VolViewer::minusMove()
 {
-	cutDistance -= 0.05;
-	cutPlane.d() = cutDistance;
 	CPoint pNormal = cutPlane.normal();
+	if (pNormal * CPoint(1, 0, 0) != 0.0)
+	{
+		cutDistance -= x_perCutDistance;
+	}
+	else if (pNormal * CPoint(0, 1, 0) != 0.0)
+	{
+		cutDistance -= y_perCutDistance;
+	}
+	else if (pNormal * CPoint(0, 0, 1) != 0.0)
+	{
+		cutDistance -= z_perCutDistance;
+	}
+
+	cutPlane.d() = cutDistance;
 	double distance = cutPlane.d();
+
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
 	
