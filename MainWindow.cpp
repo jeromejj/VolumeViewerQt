@@ -65,6 +65,12 @@ void MainWindow::dropEvent(QDropEvent * e)
 
 void MainWindow::createActions()
 {
+	newAction = new QAction(tr("&New"), this);
+	newAction->setIcon(QIcon(":/icons/images/new.png"));
+	newAction->setShortcut(QKeySequence::New);
+	newAction->setStatusTip(tr("New and reset the scene."));
+	connect(newAction, SIGNAL(triggered()), viewer, SLOT(newScene()));
+
 	openAction = new QAction(tr("&Open"), this);
 	openAction->setIcon(QIcon(":/icons/images/open.png"));
 	openAction->setShortcut(QKeySequence::Open);
@@ -81,6 +87,12 @@ void MainWindow::createActions()
 	exportVisibleMeshAction->setIcon(QIcon(":/icons/images/export_surface.png"));
 	exportVisibleMeshAction->setStatusTip(tr("export the visible surface of the tet mesh as a mesh file"));
 	connect(exportVisibleMeshAction, SIGNAL(triggered()), viewer, SLOT(exportVisibleMesh()));
+
+	screenshotAction = new QAction(tr("&Screenshot"), this);
+	screenshotAction->setIcon(QIcon(":/icons/images/screenshot.png"));
+	screenshotAction->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_4));
+	screenshotAction->setStatusTip(tr("Save the screenshot"));
+	connect(screenshotAction, SIGNAL(triggered()), viewer, SLOT(screenshot()));
 
 	selectAction = new checkableAction(this);
 	selectAction->setIcon(QIcon(":/icons/images/select.png"));
@@ -119,7 +131,7 @@ void MainWindow::createActions()
 	connect(lightControl, SIGNAL(actionUncheck()), viewer, SLOT(lightOff()));
 
 	rotationControl = new checkableAction(this);
-	rotationControl->setText(tr("&Light Control"));
+	rotationControl->setText(tr("&Rotation Control"));
 	rotationControl->setIcon(QIcon(":/icons/images/rotation.png"));
 	rotationControl->setCheckable(true);
 	rotationControl->setChecked(true);
@@ -228,9 +240,11 @@ void MainWindow::createActions()
 void MainWindow::createToolbar()
 {
 	fileToolbar = addToolBar(tr("&File"));
+	fileToolbar->addAction(newAction);
 	fileToolbar->addAction(openAction);
 	fileToolbar->addAction(saveAction);
 	fileToolbar->addAction(exportVisibleMeshAction);
+	fileToolbar->addAction(screenshotAction);
 	
 	editToolbar = addToolBar(tr("&Edit"));
 	editToolbar->addAction(selectAction);

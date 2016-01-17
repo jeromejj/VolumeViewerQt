@@ -49,10 +49,13 @@ public:
 	void loadFromMainWin(std::string, std::string);
 
 public slots:
+
+	void newScene();
 	void openMesh();
 	void openTexture();
 	void saveMesh();
 	void exportVisibleMesh();	//!< export the visible surface of the tet mesh as a mesh file(such as .m file)
+	void screenshot();
 	void enterSelectionMode();
 	void quitSelectionMode();
 
@@ -89,17 +92,24 @@ private:
 	void makeWholeSceneVisible();
 
 	void paintGL();
-	void drawMesh();
+	void drawMesh(TMeshLib::CVTMesh * tmesh);
+	void drawMesh(HMeshLib::CVHMesh * hmesh);
 
 	void drawSphere(CPoint p, double radius);
 
-	void drawFiber();
-	void drawMeshPoints();
+	void drawFiber(TMeshLib::CVTMesh * fiber);
+	
+	void drawMeshPoints(TMeshLib::CVTMesh * tmesh);
+	void drawMeshPoints(HMeshLib::CVHMesh * hmesh);
+
 	void drawMeshWireframe();
 	void drawMeshFlatline();
 	void drawMeshFlat();
-	void drawSelectedVertex();
-	void drawBoundaryHalfFaces();
+
+	void drawSelectedVertex(TMeshLib::CVTMesh * tmesh);
+	void drawSelectedVertex(HMeshLib::CVHMesh * hmesh);
+	void drawBoundaryHalfFaces(TMeshLib::CVTMesh * tmesh);
+	void drawBoundaryHalfFaces(HMeshLib::CVHMesh * hmesh);
 	void drawVector();
 
 	void drawHalfFaces(std::vector<TMeshLib::CViewerHalfFace*> & HalfFaces);
@@ -141,6 +151,9 @@ private:
 	TMeshLib::CVTMesh * mesh;
 	HMeshLib::CVHMesh * hmesh;
 
+	std::vector<TMeshLib::CVTMesh*> tmeshlist;
+	std::vector<HMeshLib::CVHMesh*> hmeshlist;
+
 	CPoint center;
 	GLdouble radius;
 	double trackballRadius;
@@ -148,6 +161,7 @@ private:
 	DRAW_MODE meshDrawMode;
 
 	QString filename;
+	QStringList filenames;
 	std::string sFilename;
 
 	// texture

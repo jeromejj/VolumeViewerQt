@@ -28,9 +28,11 @@ private:
 
 	VolViewer * viewer;
 
+	QAction * newAction;
 	QAction * openAction;
 	QAction * saveAction;
 	QAction * exportVisibleMeshAction;
+	QAction * screenshotAction;
 
 	checkableAction * lightControl;
 	checkableAction * rotationControl;

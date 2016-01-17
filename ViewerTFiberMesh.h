@@ -231,6 +231,9 @@ namespace MeshLib
 
 			// write the visible surface(m_pHFaces_Below) as a mesh file
 			void _write_visible_surface(const char *);
+
+			bool & isFiber() { return m_isFiber; };
+
 		private:
 			std::map<int, int> mapSelectedNewVertex;
 
@@ -243,6 +246,7 @@ namespace MeshLib
 		protected:
 			std::list<CFiber*> m_fibers;
 			int m_nFibers;
+			bool m_isFiber = false;
 		};
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
@@ -255,6 +259,8 @@ namespace MeshLib
 				fprintf(stderr, "Error in opening file %s\n", input);
 				return;
 			}
+			
+			m_isFiber = true;
 
 			std::string line;
 			while (!is.eof())
