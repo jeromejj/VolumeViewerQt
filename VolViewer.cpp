@@ -1077,6 +1077,28 @@ void VolViewer::saveFile(const char * meshfile, std::string sExt)
 	}
 }
 
+void VolViewer::exportVisibleMesh()
+{
+	QString exportFilename = QFileDialog::getSaveFileName(this,
+		tr("Save Mesh File"),
+		tr("../models/"),
+		tr("Mesh Files (*.m)"));
+	QFileInfo * exportFileInfo = new QFileInfo(exportFilename);
+	std::string exportFileExt = exportFileInfo->suffix().toStdString();
+	if (!exportFilename.isEmpty())
+	{
+		QByteArray byteArray = exportFilename.toUtf8();
+		const char * _exportFilename = byteArray.constData();
+		exportVisibleSurface(_exportFilename, exportFileExt);
+	}
+}
+
+void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt)
+{
+	assert(sExt == "m");
+	mesh->_write_visible_surface(surface_file);
+}
+
 void VolViewer::enterSelectionMode()
 {
 	if (!isSelectionMode)

@@ -39,6 +39,7 @@ public:
 
 	void loadFile(const char *, std::string sExt);
 	void saveFile(const char *, std::string sExt);
+	void exportVisibleSurface(const char *, std::string sExt);	//!< export the visible surface of the tet mesh
 
 	void setDrawMode(DRAW_MODE drawMode);
 
@@ -51,6 +52,7 @@ public slots:
 	void openMesh();
 	void openTexture();
 	void saveMesh();
+	void exportVisibleMesh();	//!< export the visible surface of the tet mesh as a mesh file(such as .m file)
 	void enterSelectionMode();
 	void quitSelectionMode();
 

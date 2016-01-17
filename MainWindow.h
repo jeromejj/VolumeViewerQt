@@ -30,6 +30,7 @@ private:
 
 	QAction * openAction;
 	QAction * saveAction;
+	QAction * exportVisibleMeshAction;
 
 	checkableAction * lightControl;
 	checkableAction * rotationControl;

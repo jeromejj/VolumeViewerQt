@@ -77,6 +77,11 @@ void MainWindow::createActions()
 	saveAction->setStatusTip(tr("save a mesh file"));
 	connect(saveAction, SIGNAL(triggered()), viewer, SLOT(saveMesh()));
 
+	exportVisibleMeshAction = new QAction(tr("&Export Visible Mesh"), this);
+	exportVisibleMeshAction->setIcon(QIcon(":/icons/images/export_surface.png"));
+	exportVisibleMeshAction->setStatusTip(tr("export the visible surface of the tet mesh as a mesh file"));
+	connect(exportVisibleMeshAction, SIGNAL(triggered()), viewer, SLOT(exportVisibleMesh()));
+
 	selectAction = new checkableAction(this);
 	selectAction->setIcon(QIcon(":/icons/images/select.png"));
 	selectAction->setText(tr("Select Vertices"));
@@ -225,6 +230,7 @@ void MainWindow::createToolbar()
 	fileToolbar = addToolBar(tr("&File"));
 	fileToolbar->addAction(openAction);
 	fileToolbar->addAction(saveAction);
+	fileToolbar->addAction(exportVisibleMeshAction);
 	
 	editToolbar = addToolBar(tr("&Edit"));
 	editToolbar->addAction(selectAction);

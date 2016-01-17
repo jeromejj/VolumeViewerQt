@@ -2,6 +2,7 @@
 #define _TMESHLIB_VIEWER_MESH_H_
 
 #include <stdio.h>
+#include <map>
 
 #include "..\MeshLib\core\TetMesh\BaseTMesh.h"
 #include "..\MeshLib\core\TetMesh\titerators.h"
@@ -10,7 +11,7 @@
 #include "..\MeshLib\core\Parser\parser.h"
 
 namespace MeshLib
-{ 
+{
 	namespace TMeshLib
 	{
 
@@ -202,6 +203,7 @@ namespace MeshLib
 			typedef FaceVertexIterator<TV, V, HE, TE, E, HF, F, T> FaceVertexIterator;
 			typedef TMeshVertexIterator<TV, V, HE, TE, E, HF, F, T> MeshVertexIterator;
 			typedef TVertexVertexIterator<TV, V, HE, TE, E, HF, F, T> VertexVertexIterator;
+			typedef VertexTVertexIterator<TV, V, HE, TE, E, HF, F, T> VertexTVertexIterator;
 
 		public:
 			void _normalize();
@@ -227,6 +229,8 @@ namespace MeshLib
 			// load fiber file
 			void _load_f(const char *);
 
+			// write the visible surface(m_pHFaces_Below) as a mesh file
+			void _write_visible_surface(const char *);
 		private:
 			std::map<int, int> mapSelectedNewVertex;
 
@@ -673,6 +677,128 @@ namespace MeshLib
 					continue;
 				}
 			}
+		}
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_visible_surface(const char * filename)
+		{
+			std::string mesh_other_name(filename);
+			std::string mesh_sel_name(filename);
+
+			//mesh_other_name.insert(mesh_other_name.find_last_of(".m") - 1, "_other");
+			mesh_sel_name.insert(mesh_other_name.find_last_of(".m") - 1, "_selected");
+
+			std::fstream _os_other(mesh_other_name, std::fstream::out);
+			if (_os_other.fail())
+			{
+				fprintf(stderr, "Error while opening file %s\n", filename);
+				return;
+			}
+
+			std::fstream _os_sel(mesh_sel_name, std::fstream::out);
+			if (_os_sel.fail())
+			{
+				fprintf(stderr, "Error while opening file %s\n", filename);
+				return;
+			}
+
+			std::map<int, V*> selected_verts;
+			std::set<HF*> selected_facets;
+			std::map<int, V*> other_verts;
+			std::set<HF*> other_facets;
+			// prepare the data for vertices and facets
+			for (std::vector<HF*>::iterator it = m_pHFaces_Below.begin(); it != m_pHFaces_Below.end(); ++it)
+			{
+				HF * pHF = *it;
+				F * pF = this->HalfFaceFace(pHF);
+
+				for (HalfFaceVertexIterator fvIter(this, pHF); !fvIter.end(); ++fvIter)
+				{
+					V * v = *fvIter;
+					if (pF->selected())
+						selected_verts.insert(std::pair<int, V*>(v->id(), v));
+					else
+						other_verts.insert(std::pair<int, V*>(v->id(), v));
+				}
+				if (pF->selected())
+					selected_facets.insert(pHF);
+				else
+					other_facets.insert(pHF);
+			}
+			// write selected part to .m file
+			for each(const std::pair<int, V*> v in selected_verts)
+			{
+				assert(v.first == v.second->id());
+
+				CPoint n(0, 0, 0);	//!< vertex normal
+				for (VertexTVertexIterator v_tv_it(this, v.second); !v_tv_it.end(); ++v_tv_it)
+				{
+					TV * tv = *v_tv_it;
+					T * tet = this->TVertexTet(tv);
+					for (TetHFIterator t_hf_it(this, tet); !t_hf_it.end(); ++t_hf_it)
+					{
+						HF * hf = *t_hf_it;
+						if (std::find(m_pHFaces_Below.begin(), m_pHFaces_Below.end(), hf) != m_pHFaces_Below.end())
+							n += hf->normal();
+					}
+				}
+				n /= n.norm();
+
+				CPoint & p = v.second->position();
+				_os_sel << "Vertex " << v.first << " " << p[0] << " " << p[1] << " " << p[2];
+				_os_sel << " {normal=(" << n[0] << " " << n[1] << " " << n[2] << ")}" << std::endl;
+			}
+
+			int fid = 0;
+			for (std::set<HF*>::iterator hfIter = selected_facets.begin(); hfIter != selected_facets.end(); hfIter++)
+			{
+				_os_sel << "Face " << ++fid << " ";
+				HF * pHF = *hfIter;
+				for (HalfFaceVertexIterator fvIter(this, pHF); !fvIter.end(); ++fvIter)
+				{
+					V * v = *fvIter;
+					_os_sel << v->id() << " ";
+				}
+				_os_sel << std::endl;
+			}
+			_os_sel.close();
+
+			// write other part to .m file
+			for each(const std::pair<int, V*> v in other_verts)
+			{
+				assert(v.first == v.second->id());
+
+				CPoint n(0, 0, 0);	//!< vertex normal
+				for (VertexTVertexIterator v_tv_it(this, v.second); !v_tv_it.end(); ++v_tv_it)
+				{
+					TV * tv = *v_tv_it;
+					T * tet = this->TVertexTet(tv);
+					for (TetHFIterator t_hf_it(this, tet); !t_hf_it.end(); ++t_hf_it)
+					{
+						HF * hf = *t_hf_it;
+						if (std::find(m_pHFaces_Below.begin(), m_pHFaces_Below.end(), hf) != m_pHFaces_Below.end())
+							n += hf->normal();
+					}
+				}
+				n /= n.norm();
+
+				CPoint & p = v.second->position();
+				_os_other << "Vertex " << v.first << " " << p[0] << " " << p[1] << " " << p[2];
+				_os_other << " {normal=(" << n[0] << " " << n[1] << " " << n[2] << ")}" << std::endl;
+			}
+
+			for (std::set<HF*>::iterator hfIter = other_facets.begin(); hfIter != other_facets.end(); hfIter++)
+			{
+				_os_other << "Face " << ++fid << " ";
+				HF * pHF = *hfIter;
+				for (HalfFaceVertexIterator fvIter(this, pHF); !fvIter.end(); ++fvIter)
+				{
+					V * v = *fvIter;
+					_os_other << v->id() << " ";
+				}
+				_os_other << std::endl;
+			}
+			_os_other.close();
 		}
 
 		typedef CViewerTMesh<CViewerTVertex, CViewerVertex, CViewerHalfEdge, CViewerTEdge, CViewerEdge, CViewerHalfFace, CViewerFace, CViewerTet> CVTMesh;

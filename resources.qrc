@@ -1,27 +1,28 @@
 <RCC>
-  <qresource prefix="/icons">
-    <file>images/open.png</file>
-    <file>images/save.png</file>
-    <file>images/points.png</file>
-    <file>images/totalwire.png</file>
-    <file>images/wireframe.png</file>
-    <file>images/flatlines.png</file>
-    <file>images/flat.png</file>
-    <file>images/smooth.png</file>
-    <file>images/texture.png</file>
-    <file>images/texturemodulate.png</file>
-    <file>images/light.png</file>
-    <file>images/vector.png</file>
-    <file>images/select.png</file>
-    <file>images/selectcutface.png</file>
-    <file>images/clear.png</file>
-    <file>images/rotation.png</file>
-    <file>images/xcut.png</file>
-    <file>images/ycut.png</file>
-    <file>images/zcut.png</file>
-    <file>images/plus.png</file>
-    <file>images/minus.png</file>
-    <file>images/cut.png</file>
-    <file>images/boundary.png</file>
-  </qresource>
+    <qresource prefix="/icons">
+        <file>images/open.png</file>
+        <file>images/save.png</file>
+        <file>images/points.png</file>
+        <file>images/totalwire.png</file>
+        <file>images/wireframe.png</file>
+        <file>images/flatlines.png</file>
+        <file>images/flat.png</file>
+        <file>images/smooth.png</file>
+        <file>images/texture.png</file>
+        <file>images/texturemodulate.png</file>
+        <file>images/light.png</file>
+        <file>images/vector.png</file>
+        <file>images/select.png</file>
+        <file>images/selectcutface.png</file>
+        <file>images/clear.png</file>
+        <file>images/rotation.png</file>
+        <file>images/xcut.png</file>
+        <file>images/ycut.png</file>
+        <file>images/zcut.png</file>
+        <file>images/plus.png</file>
+        <file>images/minus.png</file>
+        <file>images/cut.png</file>
+        <file>images/boundary.png</file>
+        <file>images/export_surface.png</file>
+    </qresource>
 </RCC>
