@@ -1025,14 +1025,17 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 
 	CPlane p(CPoint(0.0, 0.0, 1.0), 0.0);
 
-	if (currentVolType == VOLUME_TYPE::TET)
+	for (size_t t = 0; t < tmeshlist.size(); t++)
 	{
-		mesh->_normalize();
-		mesh->_halfface_normal();
-		mesh->_cut(p);
+		TMeshLib::CVTMesh * tmesh = tmeshlist[t];
+		tmesh->_normalize();
+		tmesh->_halfface_normal();
+		tmesh->_cut(p);
 	}
-	else if (currentVolType == VOLUME_TYPE::HEX)
+	
+	for (size_t h = 0; h < hmeshlist.size(); h++)
 	{
+		HMeshLib::CVHMesh * hmesh = hmeshlist[h];
 		hmesh->_normalize();
 		hmesh->_halfface_normal();
 		hmesh->_cut(p);
