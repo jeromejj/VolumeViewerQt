@@ -58,8 +58,6 @@ void MainWindow::dropEvent(QDropEvent * e)
 
 		QString canonicalFilePath = QFileInfo(filename).canonicalFilePath();
 		viewer->loadFromMainWin(sFileName, fExt);
-		QString title = "VolViewerQt - " + canonicalFilePath;
-		setWindowTitle(title);
 	}
 }
 

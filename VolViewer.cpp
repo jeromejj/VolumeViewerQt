@@ -1166,10 +1166,25 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 
 void VolViewer::loadFromMainWin(std::string outFilename, std::string outExt)
 {
+	bool firstMesh = false;
+	if (tmeshlist.size() == 0 && hmeshlist.size() == 0)
+	{
+		windowTitle = "VolumeViewerQt - ";
+		firstMesh = true;
+	}
 	sFilename = outFilename;
 	filename = QString::fromStdString(outFilename);
+	QFileInfo * fileInfo = new QFileInfo(filename);
+	QString canonicalFilePath = fileInfo->canonicalFilePath();
+	windowTitle += firstMesh ? canonicalFilePath : " | " + canonicalFilePath;
 	const char * _filename = outFilename.c_str();
 	loadFile(_filename, outExt);
+
+	foreach(QWidget *widget, qApp->topLevelWidgets())
+	{
+		MainWindow * mainWin = qobject_cast<MainWindow*>(widget);
+		mainWin->setWindowTitle(windowTitle);
+	}
 }
 
 void VolViewer::newScene()
@@ -1177,7 +1192,7 @@ void VolViewer::newScene()
 	tmeshlist.clear();
 	hmeshlist.clear();
 
-	QString windowTitle = "VolumeViewerQt";
+	windowTitle = "VolumeViewerQt";
 
 	foreach(QWidget *widget, qApp->topLevelWidgets())
 	{
@@ -1199,7 +1214,7 @@ void VolViewer::openMesh()
 		"Fiber (*.f)"));
 
 
-	QString windowTitle = "VolumeViewerQt - ";
+	windowTitle = "VolumeViewerQt - ";
 
 	for (QStringList::iterator sIter = filenames.begin(); sIter != filenames.end(); sIter++)
 	{
@@ -1215,7 +1230,15 @@ void VolViewer::openMesh()
 			sFilename = filename.toStdString();
 			loadFile(_filename, sFileExt);
 
-			windowTitle += canonicalFilePath + "; ";
+			if (sIter == filenames.begin())
+			{
+				windowTitle += canonicalFilePath;
+			}
+			else
+			{
+				windowTitle += " | " + canonicalFilePath;
+			}
+			
 		}
 	}
 

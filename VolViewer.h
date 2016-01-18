@@ -183,6 +183,8 @@ private:
 	RgbImage * texture;
 	GLuint texName;
 
+	QString windowTitle;
+
 	GLdouble matModelView[16], matProjection[16];
 	GLint viewPort[4];
 
