@@ -17,6 +17,8 @@ namespace MeshLib
 		public:
 			CHViewerVertex() { m_outside = false; m_selected = false; m_cut = false; };
 			~CHViewerVertex(){};
+
+			bool & boundary() { return m_boundary; };
 			bool & outside() { return m_outside; };
 			bool & selected() { return m_selected; };
 			bool & cut() { return m_cut; };
@@ -35,6 +37,7 @@ namespace MeshLib
 			};
 
 		protected:
+			bool m_boundary;
 			bool m_outside;
 			bool m_selected;
 			CPoint2 m_uv;
@@ -187,11 +190,81 @@ namespace MeshLib
 
 			void _cut(CPlane & p);
 
+			void _write_surface(const char * output);
+
 		public:
 			std::vector<HF*> m_pHFaces_Above;
 			std::vector<HF*> m_pHFaces_Below;
 			std::vector<F *> m_cutFaces;
 			std::vector<F *> m_selectedFacesList;
+		};
+
+		template<typename HXV, typename V, typename HE, typename HXE, typename E, typename HF, typename F, typename HX>
+		void CViewerHMesh<HXV, V, HE, HXE, E, HF, F, HX>::_write_surface(const char * output)
+		{
+			std::vector<CVertex*> vertices;
+			for (std::list<HF*>::iterator hiter = m_pHalfFaces.begin(); hiter != m_pHalfFaces.end(); hiter++)
+			{
+				CHalfFace *pHF = *hiter;
+				if (HalfFaceDual(pHF) != NULL)
+				{
+					continue;
+				}
+
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 4; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					pV->boundary() = true;
+					pHE = HalfEdgeNext(pHE);
+				}
+			}
+
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				if (pV->boundary())
+				{
+					vertices.push_back(pV);
+				}
+			}
+
+			std::fstream _os(output, std::fstream::out);
+			if (_os.fail())
+			{
+				fprintf(stderr, "Error is opening file %s\n", output);
+				return;
+			}
+
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				CPoint p = pV->position();
+				_os << "Vertex " << pV->id() << " " << p << std::endl;
+			}
+
+			int faceid = 1;
+			for (std::list<HF*>::iterator hiter = m_pHalfFaces.begin(); hiter != m_pHalfFaces.end(); hiter++, faceid++)
+			{
+				CHalfFace *pHF = *hiter;
+				if (HalfFaceDual(pHF) != NULL)
+				{
+					continue;
+				}
+
+				_os << "Face " << faceid << " ";
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 4; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					pV->boundary() = true;
+					_os << pV->id() << " ";
+					pHE = HalfEdgeNext(pHE);
+				}
+				_os << std::endl;
+			}
+
+			_os.close();
 		};
 
 		template<typename HXV, typename V, typename HE, typename HXE, typename E, typename HF, typename F, typename HX>

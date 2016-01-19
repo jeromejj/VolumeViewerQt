@@ -230,7 +230,7 @@ namespace MeshLib
 			void _load_f(const char *);
 
 			// write the visible surface(m_pHFaces_Below) as a mesh file
-			void _write_visible_surface(const char *);
+			void _write_surface(const char *);
 
 			bool & isFiber() { return m_isFiber; };
 
@@ -686,7 +686,7 @@ namespace MeshLib
 		}
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
-		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_visible_surface(const char * filename)
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_surface(const char * filename)
 		{
 			std::string mesh_other_name(filename);
 			std::string mesh_sel_name(filename);

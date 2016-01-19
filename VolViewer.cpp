@@ -1312,6 +1312,7 @@ void VolViewer::saveMesh()
 		tr("../models/"),
 		tr("TET Files (*.tet);;"
 		"T Files (*.t);;"
+		"Hex Mesh Files (*.hm)"
 		"All Files (*.*)"));
 	QFileInfo * saveFileInfo = new QFileInfo(saveFilename);
 	std::string saveFileExt = saveFileInfo->suffix().toStdString();
@@ -1327,11 +1328,24 @@ void VolViewer::saveFile(const char * meshfile, std::string sExt)
 {
 	if (sExt == "tet")
 	{
-		mesh->_write(meshfile);
+		if (tmeshlist.size() > 0)
+		{
+			tmeshlist[0]->_write(meshfile);
+		}
 	}
 	else if (sExt == "t")
 	{
-		mesh->_write_t(meshfile);
+		if (tmeshlist.size() > 0)
+		{
+			tmeshlist[0]->_write_t(meshfile);
+		}
+	}
+	else if (sExt == "hm")
+	{
+		if (hmeshlist.size() > 0)
+		{
+			hmeshlist[0]->_write_hm(meshfile);
+		}
 	}
 }
 
@@ -1340,7 +1354,9 @@ void VolViewer::exportVisibleMesh()
 	QString exportFilename = QFileDialog::getSaveFileName(this,
 		tr("Save Mesh File"),
 		tr("../models/"),
-		tr("Mesh Files (*.m)"));
+		tr("Triangle Mesh Files (*.m);;"
+		"Quad Mesh (*.qm);;"
+		"Quad Mesh (*.ply);;"));
 	QFileInfo * exportFileInfo = new QFileInfo(exportFilename);
 	std::string exportFileExt = exportFileInfo->suffix().toStdString();
 	if (!exportFilename.isEmpty())
@@ -1353,8 +1369,21 @@ void VolViewer::exportVisibleMesh()
 
 void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt)
 {
-	assert(sExt == "m");
-	mesh->_write_visible_surface(surface_file);
+	if (sExt == "m")
+	{
+		if (tmeshlist.size() > 0)
+		{
+			tmeshlist[0]->_write_surface(surface_file);
+		}
+	}
+	else if (sExt == "qm")
+	{
+		if (hmeshlist.size() > 0)
+		{
+			hmeshlist[0]->_write_surface(surface_file);
+		}
+	}
+	
 }
 
 void VolViewer::enterSelectionMode()
