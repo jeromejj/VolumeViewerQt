@@ -8,8 +8,11 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QDialog>
 
 #include <string>
+
+#include "ExportDialog.h"
 
 #include "OpenGLHeader.h"
 #include "..\MeshLib\core\bmp\RgbImage.h"
@@ -39,7 +42,7 @@ public:
 
 	void loadFile(const char *, std::string sExt);
 	void saveFile(const char *, std::string sExt);
-	void exportVisibleSurface(const char *, std::string sExt);	//!< export the visible surface of the tet mesh
+	void exportVisibleSurface(const char *, std::string sExt, int exportOpt);	//!< export the visible surface of the tet mesh
 
 	void setDrawMode(DRAW_MODE drawMode);
 
@@ -55,6 +58,7 @@ public slots:
 	void openTexture();
 	void saveMesh();
 	void exportVisibleMesh();	//!< export the visible surface of the tet mesh as a mesh file(such as .m file)
+
 	void screenshot();
 	void enterSelectionMode();
 	void quitSelectionMode();

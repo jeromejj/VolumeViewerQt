@@ -1351,10 +1351,20 @@ void VolViewer::saveFile(const char * meshfile, std::string sExt)
 
 void VolViewer::exportVisibleMesh()
 {
+
+	ExportDialog * exportDiag = new ExportDialog(this);
+	int r = exportDiag->exec();
+	
+	if (r == 0)
+	{
+		return;
+	}
+
 	QString exportFilename = QFileDialog::getSaveFileName(this,
 		tr("Save Mesh File"),
 		tr("../models/"),
 		tr("Triangle Mesh Files (*.m);;"
+		"Triangle Quad Mesh (*.obj);;"
 		"Quad Mesh (*.qm);;"
 		"Quad Mesh (*.ply);;"));
 	QFileInfo * exportFileInfo = new QFileInfo(exportFilename);
@@ -1363,28 +1373,91 @@ void VolViewer::exportVisibleMesh()
 	{
 		QByteArray byteArray = exportFilename.toUtf8();
 		const char * _exportFilename = byteArray.constData();
-		exportVisibleSurface(_exportFilename, exportFileExt);
+		exportVisibleSurface(_exportFilename, exportFileExt, r);
 	}
 }
 
-void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt)
+void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt, int exportOpt)
 {
 	if (sExt == "m")
 	{
 		if (tmeshlist.size() > 0)
 		{
-			tmeshlist[0]->_write_surface(surface_file);
+			switch (exportOpt)
+			{
+			case 1:
+				tmeshlist[0]->_write_surface_m(surface_file);
+				break;
+			case 2:
+				tmeshlist[0]->_write_cut_below_surface_m(surface_file);
+				break;
+			case 3:
+				tmeshlist[0]->_write_cut_above_surface_m(surface_file);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 	else if (sExt == "qm")
 	{
 		if (hmeshlist.size() > 0)
 		{
-			hmeshlist[0]->_write_surface(surface_file);
+			switch (exportOpt)
+			{
+			case 1:
+				hmeshlist[0]->_write_surface_qm(surface_file);
+				break;
+			case 2:
+				hmeshlist[0]->_write_cut_below_surface_qm(surface_file);
+				break;
+			case 3:
+				hmeshlist[0]->_write_cut_above_surface_qm(surface_file);
+				break;
+			default:
+				break;
+			}
+			
 		}
 	}
-	
-}
+	else if (sExt == "obj")
+	{
+		if (tmeshlist.size() > 0 && hmeshlist.size() == 0)
+		{
+			switch (exportOpt)
+			{
+			case 1:
+				tmeshlist[0]->_write_surface_obj(surface_file);
+				break;
+			case 2:
+				tmeshlist[0]->_write_cut_below_surface_obj(surface_file);
+				break;
+			case 3:
+				tmeshlist[0]->_write_cut_above_surface_obj(surface_file);
+				break;
+			default:
+				break;
+			}
+		}
+		else if (tmeshlist.size() == 0 && hmeshlist.size() > 0)
+		{
+			switch (exportOpt)
+			{
+			case 1:
+				hmeshlist[0]->_write_surface_obj(surface_file);
+				break;
+			case 2:
+				hmeshlist[0]->_write_cut_below_surface_obj(surface_file);
+				break;
+			case 3:
+				hmeshlist[0]->_write_cut_above_surface_obj(surface_file);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+};
 
 void VolViewer::enterSelectionMode()
 {
