@@ -241,6 +241,8 @@ namespace MeshLib
 
 			void _labelVertexGroup();
 
+			void _labelBoundary();
+
 			/*! get cut faces vector */
 			std::vector<F *> _getCutFaces() { return m_cutFaces; };
 
@@ -789,7 +791,7 @@ namespace MeshLib
 		};
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
-		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_surface_obj(const char * output)
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_labelBoundary()
 		{
 			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
 			{
@@ -797,14 +799,6 @@ namespace MeshLib
 				pV->boundary() = false;
 			}
 
-			std::fstream _os(output, std::fstream::out);
-			if (_os.fail())
-			{
-				fprintf(stderr, "Error is opening file %s\n", output);
-				return;
-			}
-
-			std::vector<CVertex*> vertices;
 			for (std::list<HF*>::iterator hiter = m_pHalfFaces.begin(); hiter != m_pHalfFaces.end(); hiter++)
 			{
 				CHalfFace *pHF = *hiter;
@@ -821,6 +815,22 @@ namespace MeshLib
 					pHE = HalfEdgeNext(pHE);
 				}
 			}
+		};
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_surface_obj(const char * output)
+		{
+
+			std::fstream _os(output, std::fstream::out);
+			if (_os.fail())
+			{
+				fprintf(stderr, "Error is opening file %s\n", output);
+				return;
+			}
+
+			_labelBoundary();
+
+			std::vector<CVertex*> vertices;
 
 			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
 			{
@@ -873,30 +883,11 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_surface_m(const char * output)
 		{
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
+
+			_labelBoundary();
 
 			std::vector<CVertex*> vertices;
-			for (std::list<HF*>::iterator hiter = m_pHalfFaces.begin(); hiter != m_pHalfFaces.end(); hiter++)
-			{
-				CHalfFace *pHF = *hiter;
-				if (HalfFaceDual(pHF) != NULL)
-				{
-					continue;
-				}
-
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
-			}
-
+	
 			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
 			{
 				CVertex * pV = *vIter;
@@ -946,32 +937,10 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_above_surface_m(const char * output)
 		{
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
+
+			_labelBoundary();
 
 			std::vector<CHalfFace*> outputHalfFaces;
-
-			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Above.begin(); hfIter != m_pHFaces_Above.end(); hfIter++)
-			{
-				CHalfFace * pHF = *hfIter;
-				if (HalfFaceDual(pHF) != NULL)
-				{
-					continue;
-				}
-
-				outputHalfFaces.push_back(pHF);
-
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
-			}
 
 			for (std::vector<CFace*>::iterator fIter = m_cutFaces.begin(); fIter != m_cutFaces.end(); fIter++)
 			{
@@ -1034,32 +1003,10 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_above_surface_obj(const char * output)
 		{
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
+			
+			_labelBoundary();
 
 			std::vector<CHalfFace*> outputHalfFaces;
-
-			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Above.begin(); hfIter != m_pHFaces_Above.end(); hfIter++)
-			{
-				CHalfFace * pHF = *hfIter;
-				if (HalfFaceDual(pHF) != NULL)
-				{
-					continue;
-				}
-
-				outputHalfFaces.push_back(pHF);
-
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
-			}
 
 			for (std::vector<CFace*>::iterator fIter = m_cutFaces.begin(); fIter != m_cutFaces.end(); fIter++)
 			{
@@ -1130,11 +1077,8 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_above_surface_group_obj(const char * output, int groupid)
 		{
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
+
+			_labelBoundary();
 
 			std::vector<CHalfFace*> outputHalfFaces;
 
@@ -1153,13 +1097,6 @@ namespace MeshLib
 					outputHalfFaces.push_back(pHF);
 				}
 
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
 			}
 
 			std::vector<CVertex*> vertices;
@@ -1222,12 +1159,8 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_above_surface_only_group_obj(const char * output, int groupid)
 		{
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
 
+			_labelBoundary();
 			std::vector<CHalfFace*> outputHalfFaces;
 
 			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Above.begin(); hfIter != m_pHFaces_Above.end(); hfIter++)
@@ -1245,13 +1178,6 @@ namespace MeshLib
 					outputHalfFaces.push_back(pHF);
 				}
 
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
 			}
 
 			std::vector<CVertex*> vertices;
@@ -1314,12 +1240,8 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_below_surface_m(const char * output)
 		{ 
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
-
+			
+			_labelBoundary();
 			std::vector<CHalfFace*> outputHalfFaces;
 
 			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Below.begin(); hfIter != m_pHFaces_Below.end(); hfIter++)
@@ -1332,13 +1254,6 @@ namespace MeshLib
 
 				outputHalfFaces.push_back(pHF);
 
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
 			}
 
 			for (std::vector<CFace*>::iterator fIter = m_cutFaces.begin(); fIter != m_cutFaces.end(); fIter++)
@@ -1402,40 +1317,21 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_below_surface_obj(const char * output)
 		{ 
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
 
-			std::vector<CHalfFace*> outputHalfFaces;
-
+			std::vector<CVertex*> vertices;
 			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Below.begin(); hfIter != m_pHFaces_Below.end(); hfIter++)
 			{
 				CHalfFace * pHF = *hfIter;
-				//if (HalfFaceDual(pHF) != NULL)
-				//{
-				//	continue;
-				//}
-
-				outputHalfFaces.push_back(pHF);
-
+				
 				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
 				for (int k = 0; k < 4; k++)
 				{
 					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
+					if (std::find(vertices.begin(), vertices.end(), pV) != vertices.end())
+					{
+						vertices.push_back(pV);
+					}
 					pHE = HalfEdgeNext(pHE);
-				}
-			}
-
-			std::vector<CVertex*> vertices;
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				if (pV->boundary())
-				{
-					vertices.push_back(pV);
 				}
 			}
 
@@ -1462,7 +1358,7 @@ namespace MeshLib
 				_os << "v " << p << std::endl;
 			}
 
-			for (std::vector<HF*>::iterator hiter = outputHalfFaces.begin(); hiter != outputHalfFaces.end(); hiter++)
+			for (std::vector<CHalfFace*>::iterator hiter = m_pHFaces_Below.begin(); hiter != m_pHFaces_Below.end(); hiter++)
 			{
 				CHalfFace *pHF = *hiter;
 				_os << "f ";
@@ -1482,11 +1378,8 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_below_surface_group_obj(const char * output, int groupid)
 		{
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
+			
+			_labelBoundary();
 
 			std::vector<CHalfFace*> outputHalfFaces;
 
@@ -1505,13 +1398,6 @@ namespace MeshLib
 					outputHalfFaces.push_back(pHF);
 				}
 
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
 			}
 
 			std::vector<CVertex*> vertices;
@@ -1574,11 +1460,8 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_below_surface_only_group_obj(const char * output, int groupid)
 		{
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
-			{
-				CVertex * pV = *vIter;
-				pV->boundary() = false;
-			}
+
+			_labelBoundary();
 
 			std::vector<CHalfFace*> outputHalfFaces;
 
@@ -1597,13 +1480,6 @@ namespace MeshLib
 					outputHalfFaces.push_back(pHF);
 				}
 
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
 			}
 
 			std::vector<CVertex*> vertices;

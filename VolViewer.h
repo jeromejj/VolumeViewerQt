@@ -120,9 +120,9 @@ private:
 	void drawBoundaryHalfFaces(HMeshLib::CVHMesh * hmesh);
 	void drawVector();
 
-	void drawHalfFaces(std::vector<TMeshLib::CViewerHalfFace*> & HalfFaces);
+	void drawHalfFaces(TMeshLib::CVTMesh * mesh, std::vector<TMeshLib::CViewerHalfFace*> & HalfFaces);
 
-	void drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces);
+	void drawHalfFaces(HMeshLib::CVHMesh * mesh, std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces);
 
 	float fovy() const { return 45.0f; }
 
@@ -138,7 +138,7 @@ private:
 	void rotationView(QPoint newPos);
 	void rotate(CPoint axis, double angle);
 
-	void selectCutFace(QPoint newPos);
+	void selectBoundaryFace(QPoint newPos);
 	void selectAllCutFaces(QPoint newPos);
 
 	CPoint getRayVector(QPoint point, CPoint & nearPt, CPoint & farPt);
@@ -164,9 +164,6 @@ private:
 	bool isRotationViewOn;
 
 	VOLUME_TYPE meshVolType;
-
-	TMeshLib::CVTMesh * mesh;
-	HMeshLib::CVHMesh * hmesh;
 
 	std::vector<TMeshLib::CVTMesh*> tmeshlist;
 	std::vector<HMeshLib::CVHMesh*> hmeshlist;

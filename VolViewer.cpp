@@ -5,8 +5,6 @@
 
 VolViewer::VolViewer(QWidget *_parent) : QGLWidget(_parent)
 {
-	mesh = new TMeshLib::CVTMesh();
-	hmesh = new HMeshLib::CVHMesh();
 
 	isSelectionMode = false;
 	isSelectionCutFaceMode = false;
@@ -168,7 +166,7 @@ void VolViewer::computeBoundingSphere()
 	double x_min, x_max, y_min, y_max, z_min, z_max;
 	x_min = y_min = z_min = 1e+30;
 	x_max = y_max = z_max = -1e+30;
-	
+
 	for (size_t t = 0; t < tmeshlist.size(); t++)
 	{
 		TMeshLib::CVTMesh * tmesh = tmeshlist[t];
@@ -214,7 +212,7 @@ void VolViewer::computeBoundingSphere()
 	z_perCutDistance = (z_max - z_min) / 30.0;
 
 	center /= numVert;
-	
+
 	double maxDist = 0;
 
 	for (size_t t = 0; t < tmeshlist.size(); t++)
@@ -292,7 +290,7 @@ void VolViewer::paintGL()
 	glPopMatrix();
 }
 
-void VolViewer::drawHalfFaces(std::vector<TMeshLib::CViewerHalfFace*> & HalfFaces)
+void VolViewer::drawHalfFaces(TMeshLib::CVTMesh * mesh, std::vector<TMeshLib::CViewerHalfFace*> & HalfFaces)
 {
 	glBindTexture(GL_TEXTURE_2D, texName);
 	glBegin(GL_TRIANGLES);
@@ -333,7 +331,7 @@ void VolViewer::drawHalfFaces(std::vector<TMeshLib::CViewerHalfFace*> & HalfFace
 	glEnd();
 }
 
-void VolViewer::drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces)
+void VolViewer::drawHalfFaces(HMeshLib::CVHMesh * hmesh, std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces)
 {
 	glBindTexture(GL_TEXTURE_2D, texName);
 
@@ -467,30 +465,34 @@ void VolViewer::drawVector()
 	glLoadMatrixd(matModelView);
 
 	glBegin(GL_LINES);
-
-	for (TMeshLib::CVTMesh::MeshTetIterator tIter(mesh); !tIter.end(); tIter++)
+	for (size_t t = 0; t < tmeshlist.size(); t++)
 	{
-		TMeshLib::CViewerTet * pT = *tIter;
+		TMeshLib::CVTMesh * mesh = tmeshlist[t];
 
-		CPoint vectorTemp = pT->vector();
-		if (vectorTemp.norm() < 1.0)
+		for (TMeshLib::CVTMesh::MeshTetIterator tIter(mesh); !tIter.end(); tIter++)
 		{
-			continue;
-		}
-		std::cout << pT->id() << std::endl;
-		glColor3f(1.0, 0, 0);
-		CPoint tetCentral(0.0, 0.0, 0.0);
-		for (int j = 0; j < 4; j++)
-		{
-			TMeshLib::CViewerVertex * pV = mesh->TetVertex(pT, j);
-			tetCentral = tetCentral + 0.25 * pV->position();
-		}
-		//tetCentral = mesh->idVertex(5)->position();
-		glVertex3f(tetCentral[0], tetCentral[1], tetCentral[2]);
+			TMeshLib::CViewerTet * pT = *tIter;
 
-		CPoint vector = pT->vector();
-		CPoint endPoint = tetCentral + 0.3 * vector;
-		glVertex3f(endPoint[0], endPoint[1], endPoint[2]);
+			CPoint vectorTemp = pT->vector();
+			if (vectorTemp.norm() < 1.0)
+			{
+				continue;
+			}
+			std::cout << pT->id() << std::endl;
+			glColor3f(1.0, 0, 0);
+			CPoint tetCentral(0.0, 0.0, 0.0);
+			for (int j = 0; j < 4; j++)
+			{
+				TMeshLib::CViewerVertex * pV = mesh->TetVertex(pT, j);
+				tetCentral = tetCentral + 0.25 * pV->position();
+			}
+			//tetCentral = mesh->idVertex(5)->position();
+			glVertex3f(tetCentral[0], tetCentral[1], tetCentral[2]);
+
+			CPoint vector = pT->vector();
+			CPoint endPoint = tetCentral + 0.3 * vector;
+			glVertex3f(endPoint[0], endPoint[1], endPoint[2]);
+		}
 	}
 
 	glEnd();
@@ -513,29 +515,29 @@ void VolViewer::drawMesh(HMeshLib::CVHMesh * mesh)
 
 	case DRAW_MODE::POINTS:
 		drawMeshPoints(mesh);
+		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::WIREFRAME:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_LINE);
-		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::FLATLINES:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_LINE);
-		drawHalfFaces(mesh->m_pHFaces_Above);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Above);
 		glPolygonMode(GL_FRONT, GL_FILL);
-		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::FLAT:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_FILL);
-		drawHalfFaces(mesh->m_pHFaces_Below);
-		break;
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		drawSelectedVertex(mesh);
 		break;
 
@@ -548,13 +550,13 @@ void VolViewer::drawMesh(HMeshLib::CVHMesh * mesh)
 	case DRAW_MODE::TEXTURE:
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		drawHalfFaces(hmesh->m_pHFaces_Below);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		break;
 
 	case DRAW_MODE::TEXTUREMODULATE:
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		break;
 
 	case DRAW_MODE::VECTOR:
@@ -586,29 +588,29 @@ void VolViewer::drawMesh(TMeshLib::CVTMesh * mesh)
 
 	case DRAW_MODE::POINTS:
 		drawMeshPoints(mesh);
+		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::WIREFRAME:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_LINE);
-		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::FLATLINES:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_LINE);
-		drawHalfFaces(mesh->m_pHFaces_Above);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Above);
 		glPolygonMode(GL_FRONT, GL_FILL);
-		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		drawSelectedVertex(mesh);
 		break;
 
 	case DRAW_MODE::FLAT:
 		glDisable(GL_TEXTURE_2D);
 		glPolygonMode(GL_FRONT, GL_FILL);
-		drawHalfFaces(mesh->m_pHFaces_Below);
-		break;
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		drawSelectedVertex(mesh);
 		break;
 
@@ -621,13 +623,13 @@ void VolViewer::drawMesh(TMeshLib::CVTMesh * mesh)
 	case DRAW_MODE::TEXTURE:
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		drawHalfFaces(hmesh->m_pHFaces_Below);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		break;
 
 	case DRAW_MODE::TEXTUREMODULATE:
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		drawHalfFaces(mesh->m_pHFaces_Below);
+		drawHalfFaces(mesh, mesh->m_pHFaces_Below);
 		break;
 
 	case DRAW_MODE::VECTOR:
@@ -776,7 +778,7 @@ void VolViewer::mousePressEvent(QMouseEvent * mouseEvent)
 		std::cout << "Mouse Left Press..." << std::endl;
 		if (isSelectionMode)
 		{
-			selectCutFace(latestMousePos);
+			selectBoundaryFace(latestMousePos);
 		}
 
 		if (isSelectionCutFaceMode)
@@ -791,23 +793,30 @@ void VolViewer::mousePressEvent(QMouseEvent * mouseEvent)
 	}
 }
 
-void VolViewer::selectCutFace(QPoint newPos)
+void VolViewer::selectBoundaryFace(QPoint newPos)
 {
 
 	CPoint newNear, newFar;
 	CPoint newRay = getRayVector(newPos, newNear, newFar);
 
 	double minAngle = std::numeric_limits<double>::max();
-	TMeshLib::CViewerVertex * minVertex;
+	double minHAngle = std::numeric_limits<double>::max();
+	TMeshLib::CViewerVertex * minVertex = nullptr;
+	HMeshLib::CHViewerVertex * minHVertex = nullptr;
 
-	std::vector<TMeshLib::CViewerFace*> cutFacesList = mesh->_getCutFaces();
-
-	for (std::vector<TMeshLib::CViewerFace*>::iterator cFIter = cutFacesList.begin(); cFIter != cutFacesList.end(); cFIter++)
+	for (size_t t = 0; t < tmeshlist.size(); t++)
 	{
-		TMeshLib::CViewerFace * currCF = *cFIter;
-		for (TMeshLib::CVTMesh::FaceVertexIterator fvIter(mesh, currCF); !fvIter.end(); fvIter++)
+		TMeshLib::CVTMesh * tmesh = tmeshlist[t];
+
+		for (TMeshLib::CVTMesh::MeshVertexIterator vIter(tmesh); !vIter.end(); vIter++)
 		{
-			TMeshLib::CViewerVertex * pV = *fvIter;
+			TMeshLib::CViewerVertex * pV = *vIter;
+
+			if (!pV->boundary())
+			{
+				continue;
+			}
+
 			CPoint pT = pV->position();
 			CPoint vertVecFromStart = pT - newNear;
 
@@ -822,17 +831,56 @@ void VolViewer::selectCutFace(QPoint newPos)
 			}
 		}
 	}
-	if (minVertex->selected())
+
+	for (size_t h = 0; h < hmeshlist.size(); h++)
 	{
-		minVertex->selected() = false;
+		HMeshLib::CVHMesh * hmesh = hmeshlist[h];
+		for (HMeshLib::CVHMesh::MeshVertexIterator vIter(hmesh); !vIter.end(); vIter++)
+		{
+			HMeshLib::CHViewerVertex * pV = *vIter;
+			if (!pV->boundary())
+			{
+				continue;
+			}
+
+			CPoint pT = pV->position();
+			CPoint vertVecFromStart = pT - newNear;
+
+			double dotProduct = vertVecFromStart * newRay;
+			double angle = dotProduct / (vertVecFromStart.norm() * newRay.norm());
+			// std::cout << angle << std::endl;
+			// find the minimum
+			if (abs(acos(angle)) - 0.0 < minHAngle)
+			{
+				minHAngle = abs(acos(angle));
+				minHVertex = pV;
+			}
+		}
+	}
+
+	if (minAngle < minHAngle)
+	{
+		if (minVertex->selected())
+		{
+			minVertex->selected() = false;
+		}
+		else
+		{
+			minVertex->selected() = true;
+		}
 	}
 	else
 	{
-		minVertex->selected() = true;
+		if (minHVertex->selected())
+		{
+			minHVertex->selected() = false;
+		}
+		else
+		{
+			minHVertex->selected() = true;
+		}
+
 	}
-
-	mesh->_updateSelectedFaces();
-
 	updateGL();
 }
 
@@ -843,26 +891,32 @@ void VolViewer::selectAllCutFaces(QPoint newPos)
 
 	double minAngle = std::numeric_limits<double>::max();
 	TMeshLib::CViewerVertex * minVertex;
+	TMeshLib::CVTMesh * minMesh;
 
-	std::vector<TMeshLib::CViewerFace*> cutFacesList = mesh->_getCutFaces();
-
-	for (std::vector<TMeshLib::CViewerFace*>::iterator cFIter = cutFacesList.begin(); cFIter != cutFacesList.end(); cFIter++)
+	for (size_t t = 0; t < tmeshlist.size(); t++)
 	{
-		TMeshLib::CViewerFace * currCF = *cFIter;
-		for (TMeshLib::CVTMesh::FaceVertexIterator fvIter(mesh, currCF); !fvIter.end(); fvIter++)
-		{
-			TMeshLib::CViewerVertex * pV = *fvIter;
-			CPoint pT = pV->position();
-			CPoint vertVecFromStart = pT - newNear;
+		TMeshLib::CVTMesh * mesh = tmeshlist[t];
+		std::vector<TMeshLib::CViewerFace*> cutFacesList = mesh->_getCutFaces();
 
-			double dotProduct = vertVecFromStart * newRay;
-			double angle = dotProduct / (vertVecFromStart.norm() * newRay.norm());
-			// std::cout << angle << std::endl;
-			// find the minimum
-			if (abs(acos(angle)) - 0.0 < minAngle)
+		for (std::vector<TMeshLib::CViewerFace*>::iterator cFIter = cutFacesList.begin(); cFIter != cutFacesList.end(); cFIter++)
+		{
+			TMeshLib::CViewerFace * currCF = *cFIter;
+			for (TMeshLib::CVTMesh::FaceVertexIterator fvIter(mesh, currCF); !fvIter.end(); fvIter++)
 			{
-				minAngle = abs(acos(angle));
-				minVertex = pV;
+				TMeshLib::CViewerVertex * pV = *fvIter;
+				CPoint pT = pV->position();
+				CPoint vertVecFromStart = pT - newNear;
+
+				double dotProduct = vertVecFromStart * newRay;
+				double angle = dotProduct / (vertVecFromStart.norm() * newRay.norm());
+				// std::cout << angle << std::endl;
+				// find the minimum
+				if (abs(acos(angle)) - 0.0 < minAngle)
+				{
+					minAngle = abs(acos(angle));
+					minVertex = pV;
+					minMesh = mesh;
+				}
 			}
 		}
 	}
@@ -877,7 +931,7 @@ void VolViewer::selectAllCutFaces(QPoint newPos)
 		TMeshLib::CViewerVertex * currV = queue.front();
 		queue.pop();
 
-		for (TMeshLib::CVTMesh::VertexVertexIterator vvIter(mesh, currV); !vvIter.end(); vvIter++)
+		for (TMeshLib::CVTMesh::VertexVertexIterator vvIter(minMesh, currV); !vvIter.end(); vvIter++)
 		{
 			TMeshLib::CViewerVertex * pV = *vvIter;
 			if (pV->cut())
@@ -892,7 +946,7 @@ void VolViewer::selectAllCutFaces(QPoint newPos)
 		}
 	}
 
-	mesh->_updateSelectedFaces();
+	minMesh->_updateSelectedFaces();
 
 	updateGL();
 }
@@ -1089,12 +1143,8 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 
 	VOLUME_TYPE currentVolType;
 
-
-	if (isMeshLoaded)
-	{
-		mesh = new TMeshLib::CVTMesh();
-		hmesh = new HMeshLib::CVHMesh();
-	}
+	TMeshLib::CVTMesh * mesh = new TMeshLib::CVTMesh();
+	HMeshLib::CVHMesh * hmesh = new HMeshLib::CVHMesh();
 
 	if (fileExt == "tet")
 	{
@@ -1159,12 +1209,14 @@ void VolViewer::loadFile(const char * meshfile, std::string fileExt)
 		TMeshLib::CVTMesh * tmesh = tmeshlist[tmeshlist.size() - 1];
 		tmesh->_halfface_normal();
 		tmesh->_cut(p);
+		tmesh->_labelBoundary();
 	}
 	else if (currentVolType == VOLUME_TYPE::HEX)
 	{
 		HMeshLib::CVHMesh * hmesh = hmeshlist[hmeshlist.size() - 1];
 		hmesh->_halfface_normal();
 		hmesh->_cut(p);
+		hmesh->_labelBoundary();
 	}
 
 	isMeshLoaded = true;
@@ -1246,7 +1298,7 @@ void VolViewer::openMesh()
 			{
 				windowTitle += " | " + canonicalFilePath;
 			}
-			
+
 		}
 	}
 
@@ -1362,7 +1414,7 @@ void VolViewer::exportVisibleMesh()
 
 	ExportDialog * exportDiag = new ExportDialog(this);
 	int r = exportDiag->exec();
-	
+
 	if (r == 0)
 	{
 		return;
@@ -1438,7 +1490,7 @@ void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt
 			default:
 				break;
 			}
-			
+
 		}
 	}
 	else if (sExt == "obj")
@@ -1542,7 +1594,7 @@ void VolViewer::xCut()
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	
+
 	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
 		TMeshLib::CVTMesh * tmesh = *tIter;
@@ -1565,7 +1617,7 @@ void VolViewer::yCut()
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	
+
 	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
 		TMeshLib::CVTMesh * tmesh = *tIter;
@@ -1589,7 +1641,7 @@ void VolViewer::zCut()
 	double distance = cutPlane.d();
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	
+
 	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
 		TMeshLib::CVTMesh * tmesh = *tIter;
@@ -1663,7 +1715,7 @@ void VolViewer::minusMove()
 
 	std::cout << "CutPlane " << "Normal=(" << pNormal[0] << " " << pNormal[1] << " " << pNormal[2] << ") ";
 	std::cout << "d=" << distance << std::endl;
-	
+
 	for (std::vector<TMeshLib::CVTMesh*>::iterator tIter = tmeshlist.begin(); tIter != tmeshlist.end(); tIter++)
 	{
 		TMeshLib::CVTMesh * tmesh = *tIter;
@@ -1683,29 +1735,33 @@ void VolViewer::cutVolume()
 {
 
 
-	std::string cutName = sFilename + "_cut.";
-	QFileInfo * fileInfo = new QFileInfo(filename);
-	QString fileExt = fileInfo->suffix();
-	std::string sFileExt = fileExt.toStdString();
-	std::string cutVertexName = cutName + "txt";
-	cutName = cutName + sFileExt;
-	const char * charFilename = cutName.c_str();
-	mesh->_cutVolumeWrite(charFilename, sFileExt);
-	//saveFile(charFilename, sFileExt);
+	//std::string cutName = sFilename + "_cut.";
+	//QFileInfo * fileInfo = new QFileInfo(filename);
+	//QString fileExt = fileInfo->suffix();
+	//std::string sFileExt = fileExt.toStdString();
+	//std::string cutVertexName = cutName + "txt";
+	//cutName = cutName + sFileExt;
+	//const char * charFilename = cutName.c_str();
+	//mesh->_cutVolumeWrite(charFilename, sFileExt);
+	////saveFile(charFilename, sFileExt);
 
-	mesh->_write_cut_vertices(cutVertexName.c_str());
+	//mesh->_write_cut_vertices(cutVertexName.c_str());
 }
 
 void VolViewer::clearSelectedVF()
 {
-	for (TMeshLib::CVTMesh::MeshVertexIterator vIter(mesh); !vIter.end(); vIter++)
+	for (size_t t = 0; t < tmeshlist.size(); t++)
 	{
-		TMeshLib::CViewerVertex * pV = *vIter;
-		pV->selected() = false;
+		TMeshLib::CVTMesh * mesh = tmeshlist[t];
+
+		for (TMeshLib::CVTMesh::MeshVertexIterator vIter(mesh); !vIter.end(); vIter++)
+		{
+			TMeshLib::CViewerVertex * pV = *vIter;
+			pV->selected() = false;
+		}
+
+		mesh->_updateSelectedFaces();
 	}
-
-	mesh->_updateSelectedFaces();
-
 	updateGL();
 }
 
