@@ -55,6 +55,9 @@ namespace MeshLib
 			bool & selected() { return m_selected; };
 			bool & cut() { return m_cut; };
 			CPoint2 & uv() { return m_uv; };
+
+			int & group() { return m_group; };
+			
 			void _from_string()
 			{
 				CParser parser(m_string);
@@ -65,6 +68,7 @@ namespace MeshLib
 					{
 						token->m_value >> m_uv;
 					}
+					
 				}
 			};
 
@@ -74,6 +78,8 @@ namespace MeshLib
 			bool m_selected;
 			CPoint2 m_uv;
 			bool m_cut;
+
+			int m_group;
 		};
 
 		/*!
@@ -120,6 +126,7 @@ namespace MeshLib
 						std::string line = strutil::trim(token->m_value, "()");
 						m_hw = strutil::parseString<double>(line);
 					}
+					
 				}
 			};
 
@@ -157,6 +164,8 @@ namespace MeshLib
 
 			CPoint & vector() { return m_vector; };
 
+			int & group() { return m_group; };
+
 			void _from_string()
 			{
 				CParser parser(m_string);
@@ -167,12 +176,18 @@ namespace MeshLib
 					{
 						token->m_value >> m_vector;
 					}
+					else if (token->m_key == "group")
+					{
+						std::string line = strutil::trim(token->m_value, "()");
+						m_group = strutil::parseString<int>(line);
+					}
 				}
 			};
 
 		protected:
 			bool m_outside;
 			CPoint m_vector;
+			int m_group = 0;
 		};
 
 		/*!
@@ -197,6 +212,7 @@ namespace MeshLib
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		class CViewerTMesh : public CTMesh < TV, V, HE, TE, E, HF, F, T >
 		{
+		public:
 			typedef TV  CTVertex;
 			typedef V	CVertex;
 			typedef HE	CHalfEdge;
@@ -219,8 +235,11 @@ namespace MeshLib
 		public:
 			void _normalize();
 			void _halfface_normal();
+			void _computeGroupNumber();
 			void _cut(CPlane &);
 			void _updateSelectedFaces();
+
+			void _labelVertexGroup();
 
 			/*! get cut faces vector */
 			std::vector<F *> _getCutFaces() { return m_cutFaces; };
@@ -243,8 +262,14 @@ namespace MeshLib
 			void _write_cut_above_surface_m(const char * output);
 			void _write_cut_above_surface_obj(const char * output);
 
+			void _write_cut_above_surface_group_obj(const char * output, int groupid);
+			void _write_cut_above_surface_only_group_obj(const char * output, int groupid);
+
 			void _write_cut_below_surface_m(const char * output);
 			void _write_cut_below_surface_obj(const char * output);
+
+			void _write_cut_below_surface_group_obj(const char * output, int groupid);
+			void _write_cut_below_surface_only_group_obj(const char * output, int groupid);
 
 			// write the visible surface(m_pHFaces_Below) as a mesh file
 			void _write_surface_m(const char * output);
@@ -252,6 +277,10 @@ namespace MeshLib
 			void _write_surface_obj(const char * output);
 
 			bool & isFiber() { return m_isFiber; };
+
+			int & maxGroup() { return m_maxGroup; };
+
+			int & minGroup() { return m_minGroup; };
 
 		private:
 			std::map<int, int> mapSelectedNewVertex;
@@ -263,6 +292,10 @@ namespace MeshLib
 			std::vector<F *> m_selectedFacesList;
 
 		protected:
+
+			int m_maxGroup = 0;
+			int m_minGroup = 0;
+
 			std::list<CFiber*> m_fibers;
 			int m_nFibers;
 			bool m_isFiber = false;
@@ -570,6 +603,57 @@ namespace MeshLib
 				pV->position() = p;
 			}
 
+		};
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_labelVertexGroup()
+		{
+			for (std::list<CTet*>::iterator tIter = m_pTets.begin(); tIter != m_pTets.end(); tIter++)
+			{
+				CTet * pT = *tIter;
+				for (int k = 0; k < 4; k++)
+				{
+					CVertex * pV = TetVertex(pT, k);
+					pV->group() = pT->group();
+				}
+			}
+
+			for (std::list<HF*>::iterator hiter = m_pHalfFaces.begin(); hiter != m_pHalfFaces.end(); hiter++)
+			{
+				HF * pHF = *hiter;
+				HF * pDHF = HalfFaceDual(pHF);
+				if (pDHF != nullptr)
+				{
+					CTet * pT = HalfFaceTet(pHF);
+					CTet * pDT = HalfFaceTet(pDHF);
+					if (pT->group() != pDT->group())
+					{
+						for (int k = 0; k < 4; k++)
+						{
+							CVertex * pV = TetVertex(pT, k);
+							pV->group() = 0;
+						}
+					}
+				}
+			}
+
+		};
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_computeGroupNumber()
+		{
+			int maxg = INT_MIN;
+			int ming = INT_MAX;
+
+			for (std::list<V*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				V * pV = *vIter;
+				maxg = (maxg < pV->group()) ? pV->group() : maxg;
+				ming = (ming > pV->group()) ? pV->group() : ming;
+			}
+
+			m_maxGroup = maxg;
+			m_minGroup = ming;
 		};
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
@@ -1044,6 +1128,190 @@ namespace MeshLib
 		};
 
 		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_above_surface_group_obj(const char * output, int groupid)
+		{
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->boundary() = false;
+			}
+
+			std::vector<CHalfFace*> outputHalfFaces;
+
+			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Above.begin(); hfIter != m_pHFaces_Above.end(); hfIter++)
+			{
+				CHalfFace * pHF = *hfIter;
+
+				if (HalfFaceDual(pHF) == NULL)
+				{
+					continue;
+				}
+
+				CTet * pT = HalfFaceTet(pHF);
+				if (pT->group() == groupid)
+				{
+					outputHalfFaces.push_back(pHF);
+				}
+
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 4; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					pV->boundary() = true;
+					pHE = HalfEdgeNext(pHE);
+				}
+			}
+
+			std::vector<CVertex*> vertices;
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				if (pV->boundary() && (pV->group() == groupid || pV->group() == 0))
+				{
+					vertices.push_back(pV);
+				}
+			}
+
+			int vid = 1;
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->id() = vid++;
+			}
+
+			std::string outputName = output;
+			size_t idx = outputName.find_last_of(".");
+			std::string ext = outputName.substr(idx, outputName.length() - idx);
+
+			std::string outputfile = outputName.substr(0, idx) + "." + std::to_string(groupid) + ext;
+
+			std::fstream _os(outputfile.c_str(), std::fstream::out);
+			if (_os.fail())
+			{
+				fprintf(stderr, "Error is opening file %s\n", output);
+				return;
+			}
+
+			_os << "# Generated by VolumeViewerQt" << std::endl;
+
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				CPoint p = pV->position();
+				_os << "v " << p << std::endl;
+			}
+
+			for (std::vector<HF*>::iterator hiter = outputHalfFaces.begin(); hiter != outputHalfFaces.end(); hiter++)
+			{
+				CHalfFace *pHF = *hiter;
+				_os << "f ";
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 3; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					_os << pV->id() << " ";
+					pHE = HalfEdgeNext(pHE);
+				}
+				_os << std::endl;
+			}
+
+			_os.close();
+
+		};
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_above_surface_only_group_obj(const char * output, int groupid)
+		{
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->boundary() = false;
+			}
+
+			std::vector<CHalfFace*> outputHalfFaces;
+
+			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Above.begin(); hfIter != m_pHFaces_Above.end(); hfIter++)
+			{
+				CHalfFace * pHF = *hfIter;
+
+				if (HalfFaceDual(pHF) != NULL)
+				{
+					continue;
+				}
+
+				CTet * pT = HalfFaceTet(pHF);
+				if (pT->group() == groupid)
+				{
+					outputHalfFaces.push_back(pHF);
+				}
+
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 4; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					pV->boundary() = true;
+					pHE = HalfEdgeNext(pHE);
+				}
+			}
+
+			std::vector<CVertex*> vertices;
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				if (pV->boundary() && (pV->group() == groupid || pV->group() == 0))
+				{
+					vertices.push_back(pV);
+				}
+			}
+
+			int vid = 1;
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->id() = vid++;
+			}
+
+			std::string outputName = output;
+			size_t idx = outputName.find_last_of(".");
+			std::string ext = outputName.substr(idx, outputName.length() - idx);
+
+			std::string outputfile = outputName.substr(0, idx) + ".surface." + std::to_string(groupid) + ext;
+
+			std::fstream _os(outputfile.c_str(), std::fstream::out);
+			if (_os.fail())
+			{
+				fprintf(stderr, "Error is opening file %s\n", output);
+				return;
+			}
+
+			_os << "# Generated by VolumeViewerQt" << std::endl;
+
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				CPoint p = pV->position();
+				_os << "v " << p << std::endl;
+			}
+
+			for (std::vector<HF*>::iterator hiter = outputHalfFaces.begin(); hiter != outputHalfFaces.end(); hiter++)
+			{
+				CHalfFace *pHF = *hiter;
+				_os << "f ";
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 3; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					_os << pV->id() << " ";
+					pHE = HalfEdgeNext(pHE);
+				}
+				_os << std::endl;
+			}
+
+			_os.close();
+
+		};
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
 		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_below_surface_m(const char * output)
 		{ 
 			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
@@ -1145,26 +1413,10 @@ namespace MeshLib
 			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Below.begin(); hfIter != m_pHFaces_Below.end(); hfIter++)
 			{
 				CHalfFace * pHF = *hfIter;
-				if (HalfFaceDual(pHF) != NULL)
-				{
-					continue;
-				}
-
-				outputHalfFaces.push_back(pHF);
-
-				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
-				for (int k = 0; k < 4; k++)
-				{
-					CVertex * pV = HalfEdgeTarget(pHE);
-					pV->boundary() = true;
-					pHE = HalfEdgeNext(pHE);
-				}
-			}
-
-			for (std::vector<CFace*>::iterator fIter = m_cutFaces.begin(); fIter != m_cutFaces.end(); fIter++)
-			{
-				CFace * pF = *fIter;
-				CHalfFace * pHF = FaceLeftHalfFace(pF);
+				//if (HalfFaceDual(pHF) != NULL)
+				//{
+				//	continue;
+				//}
 
 				outputHalfFaces.push_back(pHF);
 
@@ -1225,6 +1477,190 @@ namespace MeshLib
 			}
 
 			_os.close();
+		};
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_below_surface_group_obj(const char * output, int groupid)
+		{
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->boundary() = false;
+			}
+
+			std::vector<CHalfFace*> outputHalfFaces;
+
+			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Below.begin(); hfIter != m_pHFaces_Below.end(); hfIter++)
+			{
+				CHalfFace * pHF = *hfIter;
+
+				if (HalfFaceDual(pHF) == NULL)
+				{
+					continue;
+				}
+
+				CTet * pT = HalfFaceTet(pHF);
+				if (pT->group() == groupid)
+				{
+					outputHalfFaces.push_back(pHF);
+				}
+
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 4; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					pV->boundary() = true;
+					pHE = HalfEdgeNext(pHE);
+				}
+			}
+
+			std::vector<CVertex*> vertices;
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				if (pV->boundary() && (pV->group() == groupid || pV->group() == 0))
+				{
+					vertices.push_back(pV);
+				}
+			}
+
+			int vid = 1;
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->id() = vid++;
+			}
+
+			std::string outputName = output;
+			size_t idx = outputName.find_last_of(".");
+			std::string ext = outputName.substr(idx, outputName.length() - idx);
+
+			std::string outputfile = outputName.substr(0, idx) + "." + std::to_string(groupid) + ext;
+			
+			std::fstream _os(outputfile.c_str(), std::fstream::out);
+			if (_os.fail())
+			{
+				fprintf(stderr, "Error is opening file %s\n", output);
+				return;
+			}
+
+			_os << "# Generated by VolumeViewerQt" << std::endl;
+
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				CPoint p = pV->position();
+				_os << "v " << p << std::endl;
+			}
+
+			for (std::vector<HF*>::iterator hiter = outputHalfFaces.begin(); hiter != outputHalfFaces.end(); hiter++)
+			{
+				CHalfFace *pHF = *hiter;
+				_os << "f ";
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 3; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					_os << pV->id() << " ";
+					pHE = HalfEdgeNext(pHE);
+				}
+				_os << std::endl;
+			}
+
+			_os.close();
+
+		};
+
+		template<typename TV, typename V, typename HE, typename TE, typename E, typename HF, typename F, typename T>
+		void CViewerTMesh<TV, V, HE, TE, E, HF, F, T>::_write_cut_below_surface_only_group_obj(const char * output, int groupid)
+		{
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->boundary() = false;
+			}
+
+			std::vector<CHalfFace*> outputHalfFaces;
+
+			for (std::vector<CHalfFace*>::iterator hfIter = m_pHFaces_Below.begin(); hfIter != m_pHFaces_Below.end(); hfIter++)
+			{
+				CHalfFace * pHF = *hfIter;
+
+				if (HalfFaceDual(pHF) != NULL)
+				{
+					continue;
+				}
+
+				CTet * pT = HalfFaceTet(pHF);
+				if (pT->group() == groupid)
+				{
+					outputHalfFaces.push_back(pHF);
+				}
+
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 4; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					pV->boundary() = true;
+					pHE = HalfEdgeNext(pHE);
+				}
+			}
+
+			std::vector<CVertex*> vertices;
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				if (pV->boundary() && (pV->group() == groupid || pV->group() == 0))
+				{
+					vertices.push_back(pV);
+				}
+			}
+
+			int vid = 1;
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->id() = vid++;
+			}
+
+			std::string outputName = output;
+			size_t idx = outputName.find_last_of(".");
+			std::string ext = outputName.substr(idx, outputName.length() - idx);
+
+			std::string outputfile = outputName.substr(0, idx) + ".surface." + std::to_string(groupid) + ext;
+
+			std::fstream _os(outputfile.c_str(), std::fstream::out);
+			if (_os.fail())
+			{
+				fprintf(stderr, "Error is opening file %s\n", output);
+				return;
+			}
+
+			_os << "# Generated by VolumeViewerQt" << std::endl;
+
+			for (std::vector<CVertex*>::iterator vIter = vertices.begin(); vIter != vertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				CPoint p = pV->position();
+				_os << "v " << p << std::endl;
+			}
+
+			for (std::vector<HF*>::iterator hiter = outputHalfFaces.begin(); hiter != outputHalfFaces.end(); hiter++)
+			{
+				CHalfFace *pHF = *hiter;
+				_os << "f ";
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 3; k++)
+				{
+					CVertex * pV = HalfEdgeTarget(pHE);
+					_os << pV->id() << " ";
+					pHE = HalfEdgeNext(pHE);
+				}
+				_os << std::endl;
+			}
+
+			_os.close();
+
 		};
 
 

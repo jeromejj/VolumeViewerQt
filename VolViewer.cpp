@@ -301,14 +301,22 @@ void VolViewer::drawHalfFaces(std::vector<TMeshLib::CViewerHalfFace*> & HalfFace
 
 		TMeshLib::CViewerHalfFace * pHF = *hfIter;
 		TMeshLib::CViewerFace * pF = mesh->HalfFaceFace(pHF);
-
+		TMeshLib::CViewerTet * pT = mesh->HalfFaceTet(pHF);
 		if (pF->selected())
 		{
 			glColor3f(0.0, 0.5, 1.0);
 		}
-		else
+		else if (pT->group() == 0 || pT->group() == 1)
 		{
 			glColor3f(1.0, 0.5, 0.0);
+		}
+		else if (pT->group() == 2)
+		{
+			glColor3d(0.95, 0.05, 0.95);
+		}
+		else if (pT->group() == 3)
+		{
+			glColor3d(0.05, 0.95, 0.95);
 		}
 
 		for (TMeshLib::CVTMesh::HalfFaceVertexIterator fvIter(mesh, pHF); !fvIter.end(); ++fvIter)
@@ -949,7 +957,7 @@ void VolViewer::mouseReleaseEvent(QMouseEvent * /*mouseEvent*/)
 void VolViewer::wheelEvent(QWheelEvent * mouseEvent)
 {
 	// scroll the wheel to scale the view port
-	double moveAmount = -(double)mouseEvent->delta() / (120.0*8.0);
+	double moveAmount = -(double)mouseEvent->delta() / (120.0*2.0);
 	translate(CPoint(0.0, 0.0, moveAmount));
 	updateGL();
 	mouseEvent->accept();
@@ -1371,6 +1379,17 @@ void VolViewer::exportVisibleMesh()
 	std::string exportFileExt = exportFileInfo->suffix().toStdString();
 	if (!exportFilename.isEmpty())
 	{
+
+		// label group number to vertex
+		exportGroup = true;
+		if (exportGroup)
+		{
+			for (int t = 0; t < tmeshlist.size(); t++)
+			{
+				TMeshLib::CVTMesh * pTMesh = tmeshlist[t];
+				pTMesh->_labelVertexGroup();
+			}
+		}
 		QByteArray byteArray = exportFilename.toUtf8();
 		const char * _exportFilename = byteArray.constData();
 		exportVisibleSurface(_exportFilename, exportFileExt, r);
@@ -1379,6 +1398,8 @@ void VolViewer::exportVisibleMesh()
 
 void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt, int exportOpt)
 {
+	exportGroup = true;
+
 	if (sExt == "m")
 	{
 		if (tmeshlist.size() > 0)
@@ -1430,10 +1451,32 @@ void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt
 				tmeshlist[0]->_write_surface_obj(surface_file);
 				break;
 			case 2:
-				tmeshlist[0]->_write_cut_below_surface_obj(surface_file);
+				if (exportGroup)
+				{
+					for (int g = tmeshlist[0]->minGroup(); g <= tmeshlist[0]->maxGroup(); g++)
+					{
+						tmeshlist[0]->_write_cut_below_surface_group_obj(surface_file, g);
+						tmeshlist[0]->_write_cut_below_surface_only_group_obj(surface_file, g);
+					}
+				}
+				else
+				{
+					tmeshlist[0]->_write_cut_below_surface_obj(surface_file);
+				}
 				break;
 			case 3:
-				tmeshlist[0]->_write_cut_above_surface_obj(surface_file);
+				if (exportGroup)
+				{
+					for (int g = tmeshlist[0]->minGroup(); g <= tmeshlist[0]->maxGroup(); g++)
+					{
+						tmeshlist[0]->_write_cut_above_surface_group_obj(surface_file, g);
+						tmeshlist[0]->_write_cut_above_surface_only_group_obj(surface_file, g);
+					}
+				}
+				else
+				{
+					tmeshlist[0]->_write_cut_above_surface_obj(surface_file);
+				}
 				break;
 			default:
 				break;
