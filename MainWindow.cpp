@@ -247,7 +247,7 @@ void MainWindow::createToolbar()
 	editToolbar = addToolBar(tr("&Edit"));
 	editToolbar->addAction(selectAction);
 	editToolbar->addAction(selectCutFaces);
-	editToolbar->addAction(cutAction);
+	//editToolbar->addAction(cutAction);
 	editToolbar->addAction(clearSelected);
 
 	viewToolbar = addToolBar(tr("&View"));

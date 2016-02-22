@@ -1734,7 +1734,6 @@ void VolViewer::minusMove()
 void VolViewer::cutVolume()
 {
 
-
 	//std::string cutName = sFilename + "_cut.";
 	//QFileInfo * fileInfo = new QFileInfo(filename);
 	//QString fileExt = fileInfo->suffix();
@@ -1759,9 +1758,19 @@ void VolViewer::clearSelectedVF()
 			TMeshLib::CViewerVertex * pV = *vIter;
 			pV->selected() = false;
 		}
-
-		mesh->_updateSelectedFaces();
 	}
+
+	for (size_t h = 0; h < hmeshlist.size(); h++)
+	{
+		HMeshLib::CVHMesh * hmesh = hmeshlist[h];
+
+		for (HMeshLib::CVHMesh::MeshVertexIterator vIter(hmesh); !vIter.end(); vIter++)
+		{
+			HMeshLib::CHViewerVertex * pV = *vIter;
+			pV->selected() = false;
+		}
+	}
+
 	updateGL();
 }
 
