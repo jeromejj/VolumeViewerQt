@@ -778,7 +778,7 @@ void VolViewer::mousePressEvent(QMouseEvent * mouseEvent)
 		std::cout << "Mouse Left Press..." << std::endl;
 		if (isSelectionMode)
 		{
-			selectBoundaryFace(latestMousePos);
+			selectBoundaryCutVertices(latestMousePos);
 		}
 
 		if (isSelectionCutFaceMode)
@@ -793,7 +793,7 @@ void VolViewer::mousePressEvent(QMouseEvent * mouseEvent)
 	}
 }
 
-void VolViewer::selectBoundaryFace(QPoint newPos)
+void VolViewer::selectBoundaryCutVertices(QPoint newPos)
 {
 
 	CPoint newNear, newFar;
@@ -812,7 +812,7 @@ void VolViewer::selectBoundaryFace(QPoint newPos)
 		{
 			TMeshLib::CViewerVertex * pV = *vIter;
 
-			if (!pV->boundary())
+			if (!pV->boundary() && !pV->cut())
 			{
 				continue;
 			}
@@ -838,7 +838,7 @@ void VolViewer::selectBoundaryFace(QPoint newPos)
 		for (HMeshLib::CVHMesh::MeshVertexIterator vIter(hmesh); !vIter.end(); vIter++)
 		{
 			HMeshLib::CHViewerVertex * pV = *vIter;
-			if (!pV->boundary())
+			if (!pV->boundary() && !pV->cut())
 			{
 				continue;
 			}

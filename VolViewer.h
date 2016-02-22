@@ -138,7 +138,7 @@ private:
 	void rotationView(QPoint newPos);
 	void rotate(CPoint axis, double angle);
 
-	void selectBoundaryFace(QPoint newPos);
+	void selectBoundaryCutVertices(QPoint newPos);
 	void selectAllCutFaces(QPoint newPos);
 
 	CPoint getRayVector(QPoint point, CPoint & nearPt, CPoint & farPt);
