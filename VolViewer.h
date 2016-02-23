@@ -13,6 +13,7 @@
 #include <string>
 
 #include "ExportDialog.h"
+#include "MergeDialog.h"
 
 #include "OpenGLHeader.h"
 #include "..\MeshLib\core\bmp\RgbImage.h"
@@ -68,6 +69,7 @@ public slots:
 	void quitSelectionCutFaceMode();
 
 	void mergeVolume();
+	void mergeSamePoint();
 
 	void lightOn();
 	void lightOff();

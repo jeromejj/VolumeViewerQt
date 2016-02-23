@@ -866,6 +866,11 @@ void VolViewer::selectBoundaryCutVertices(QPoint newPos)
 	{
 		if (minVertex->selected())
 		{
+			std::vector<TMeshLib::CViewerVertex*>::iterator iter = std::find(minTMesh->selectedVertices().begin(), minTMesh->selectedVertices().end(), minVertex);
+			if (iter != minTMesh->selectedVertices().end())
+			{
+				minTMesh->selectedVertices().erase(iter);
+			}
 			minVertex->selected() = false;
 		}
 		else
@@ -878,6 +883,11 @@ void VolViewer::selectBoundaryCutVertices(QPoint newPos)
 	{
 		if (minHVertex->selected())
 		{
+			std::vector<HMeshLib::CHViewerVertex*>::iterator iter = std::find(minHMesh->selectedVertices().begin(), minHMesh->selectedVertices().end(), minHVertex);
+			if (iter != minHMesh->selectedVertices().end())
+			{
+				minHMesh->selectedVertices().erase(iter);
+			}
 			minHVertex->selected() = false;
 		}
 		else
@@ -1444,16 +1454,17 @@ void VolViewer::exportVisibleMesh()
 		tr("Save Mesh File"),
 		tr("../models/"),
 		tr("Triangle Mesh Files (*.m);;"
-		"Triangle Quad Mesh (*.obj);;"
+		"Triangle, Quad Mesh (*.obj);;"
 		"Quad Mesh (*.qm);;"
 		"Quad Mesh (*.ply);;"));
+
 	QFileInfo * exportFileInfo = new QFileInfo(exportFilename);
 	std::string exportFileExt = exportFileInfo->suffix().toStdString();
 	if (!exportFilename.isEmpty())
 	{
-
 		// label group number to vertex
-		exportGroup = true;
+		int rr = r & 1;
+		exportGroup = (rr == 1);
 		if (exportGroup)
 		{
 			for (int t = 0; t < tmeshlist.size(); t++)
@@ -1464,13 +1475,12 @@ void VolViewer::exportVisibleMesh()
 		}
 		QByteArray byteArray = exportFilename.toUtf8();
 		const char * _exportFilename = byteArray.constData();
-		exportVisibleSurface(_exportFilename, exportFileExt, r);
+		exportVisibleSurface(_exportFilename, exportFileExt, r >> 1);
 	}
 }
 
 void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt, int exportOpt)
 {
-	exportGroup = true;
 
 	if (sExt == "m")
 	{
@@ -1767,8 +1777,66 @@ void VolViewer::cutVolume()
 	//mesh->_write_cut_vertices(cutVertexName.c_str());
 };
 
+void VolViewer::mergeSamePoint()
+{
+	if (hmeshlist.size() > 0)
+	{
+		HMeshLib::CVHMesh * hmesh = hmeshlist[0];
+
+		std::map<int, int> vertexIdMap;
+
+		for (HMeshLib::CVHMesh::MeshVertexIterator vIter(hmesh); !vIter.end(); vIter++)
+		{
+			HMeshLib::CHViewerVertex * pV = *vIter;
+			for (HMeshLib::CVHMesh::MeshVertexIterator vvIter(hmesh); !vvIter.end(); vvIter++)
+			{
+				HMeshLib::CHViewerVertex * ppV = *vvIter;
+				if (ppV == pV)
+				{
+					continue;
+				}
+
+				if (ppV->position() == pV->position())
+				{
+					if (ppV->id() > pV->id())
+					{
+						vertexIdMap[ppV->id()] = pV->id();
+					}
+					else
+					{
+						vertexIdMap[pV->id()] = ppV->id();
+					}
+				}
+			}
+		}
+
+		QString saveFilename = QFileDialog::getSaveFileName(this,
+			tr("Save Tet Mesh File"),
+			tr("../models/"),
+			tr("Hex Mesh Files (*.hm);;"
+			"All Files (*.*)"));
+		QFileInfo * saveFileInfo = new QFileInfo(saveFilename);
+		std::string saveFileExt = saveFileInfo->suffix().toStdString();
+		if (!saveFilename.isEmpty())
+		{
+			QByteArray byteArray = saveFilename.toUtf8();
+			const char * _saveFilename = byteArray.constData();
+			hmesh->_write_hm_samepoint(_saveFilename, vertexIdMap);
+		}
+	}
+};
+
 void VolViewer::mergeVolume()
 {
+	MergeDialog * merge = new MergeDialog();
+
+	int r = merge->exec();
+
+	if (r == 0)
+	{
+		return;
+	}
+
 	if (hmeshlist.size() >= 2)
 	{
 		HMeshLib::CVHMesh * hmesh0 = hmeshlist[0];
@@ -1784,6 +1852,41 @@ void VolViewer::mergeVolume()
 
 			CPoint p0 = v0->position();
 			CPoint p1 = v1->position();
+			switch (r)
+			{
+			case 1:
+				v0->position() = (p0 + p1) / 2.0;
+				v1->position() = (p0 + p1) / 2.0;
+				break;
+			case 2:
+				v0->position() = v1->position();
+				break;
+			case 3:
+				v1->position() = v0->position();
+				break;
+			default:
+				break;
+			}
+			v0->selected() = false;
+			v1->selected() = false;
+		}
+
+		hmesh0->selectedVertices().clear();
+		hmesh1->selectedVertices().clear();
+	}
+	else if (hmeshlist.size() == 1) // merge the selected vertices in one volume
+	{
+		HMeshLib::CVHMesh * hmesh = hmeshlist[0];
+
+		std::vector<HMeshLib::CHViewerVertex*> selectedVertices = hmesh->selectedVertices();
+
+		for (size_t v = 0; v < selectedVertices.size(); v += 2)
+		{
+			HMeshLib::CHViewerVertex * v0 = selectedVertices[v];
+			HMeshLib::CHViewerVertex * v1 = selectedVertices[v + 1];
+
+			CPoint p0 = v0->position();
+			CPoint p1 = v1->position();
 
 			v0->position() = (p0 + p1) / 2.0;
 			v1->position() = (p0 + p1) / 2.0;
@@ -1791,8 +1894,7 @@ void VolViewer::mergeVolume()
 			v1->selected() = false;
 		}
 
-		hmesh0->selectedVertices().clear();
-		hmesh1->selectedVertices().clear();
+		hmesh->selectedVertices().clear();
 	}
 	else if (tmeshlist.size() >= 2)
 	{
@@ -1813,6 +1915,7 @@ void VolViewer::clearSelectedVF()
 			TMeshLib::CViewerVertex * pV = *vIter;
 			pV->selected() = false;
 		}
+		mesh->selectedVertices().clear();
 	}
 
 	for (size_t h = 0; h < hmeshlist.size(); h++)
@@ -1824,6 +1927,7 @@ void VolViewer::clearSelectedVF()
 			HMeshLib::CHViewerVertex * pV = *vIter;
 			pV->selected() = false;
 		}
+		hmesh->selectedVertices().clear();
 	}
 
 	updateGL();

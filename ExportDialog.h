@@ -22,8 +22,12 @@ public slots:
 
 private:
 	QGroupBox * createExportGroup();
+	QGroupBox * createGroupBox();
 
 	QGroupBox * exportGroup;
+	QGroupBox * groupBox;
+	QRadioButton * withGroup;
+	QRadioButton * withoutGroup;
 	QRadioButton * whole;
 	QRadioButton * cutBelow;
 	QRadioButton * cutAbove;

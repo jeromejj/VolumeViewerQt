@@ -196,6 +196,8 @@ namespace MeshLib
 
 			void _labelBoundary();
 
+			void _write_hm_samepoint(const char * output, std::map<int, int> vertexIdMap);
+
 			void _write_cut_above_surface_qm(const char * output);
 			void _write_cut_above_surface_obj(const char * output);
 
@@ -240,7 +242,95 @@ namespace MeshLib
 				}
 			}
 		};
-		
+
+
+		template<typename HXV, typename V, typename HE, typename HXE, typename E, typename HF, typename F, typename HX>
+		void CViewerHMesh<HXV, V, HE, HXE, E, HF, F, HX>::_write_hm_samepoint(const char * output, std::map<int, int> vertexIdMap)
+		{
+			//write traits to string, add by Wei Chen, 11/23/2015
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				pV->_to_string();
+			}
+
+			for (std::list<CHex *>::iterator tIter = m_pHexs.begin(); tIter != m_pHexs.end(); tIter++)
+			{
+				CHex * pHex = *tIter;
+				pHex->_to_string();
+			}
+
+			for (std::list<CEdge*>::iterator eIter = m_pEdges.begin(); eIter != m_pEdges.end(); eIter++)
+			{
+				CEdge * pE = *eIter;
+				pE->_to_string();
+			}
+			//write traits end
+
+			std::fstream _os(output, std::fstream::out);
+			if (_os.fail())
+			{
+				fprintf(stderr, "Error while opening file %s\n", output);
+				return;
+			}
+
+			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			{
+				CVertex * pV = *vIter;
+				CPoint p = pV->position();
+				_os << "Vertex " << pV->id();
+				for (int k = 0; k < 3; k++)
+				{
+					_os << " " << p[k];
+				}
+				if (pV->string().size() > 0)
+				{
+					_os << " " << "{" << pV->string() << "}";
+				}
+				_os << std::endl;
+			}
+
+			for (std::list<CHex *>::iterator tIter = m_pHexs.begin(); tIter != m_pHexs.end(); tIter++)
+			{
+				CHex * pHex = *tIter;
+				_os << "Hex " << pHex->id();
+				for (int k = 0; k < 8; k++)
+				{
+					CVertex * pV = HexVertex(pHex, k);
+					if (vertexIdMap.find(pV->id()) != vertexIdMap.end())
+					{
+						_os << " " << vertexIdMap[pV->id()];
+					}
+					else
+					{
+						_os << " " << pV->id();
+					}
+				}
+				if (pHex->string().size() > 0)
+				{
+					
+					_os << " " << "{" << pHex->string() << "}";
+				}
+				_os << std::endl;
+			}
+
+			for (std::list<CEdge*>::iterator eIter = m_pEdges.begin(); eIter != m_pEdges.end(); eIter++)
+			{
+				CEdge * pE = *eIter;
+				if (pE->string().size() > 0)
+				{
+					CVertex * pV1 = EdgeVertex1(pE);
+					CVertex * pV2 = EdgeVertex2(pE);
+					int id1 = (vertexIdMap.find(pV1->id()) != vertexIdMap.end()) ? vertexIdMap[pV1->id()] : pV1->id();
+					int id2 = (vertexIdMap.find(pV2->id()) != vertexIdMap.end()) ? vertexIdMap[pV2->id()] : pV2->id();
+					_os << "Edge " << id1 << " " << id2 << " ";
+					_os << "{" << pE->string() << "}" << std::endl;
+				}
+			}
+
+			_os.close();
+		};
+			
 		template<typename HXV, typename V, typename HE, typename HXE, typename E, typename HF, typename F, typename HX>
 		void CViewerHMesh<HXV, V, HE, HXE, E, HF, F, HX>::_write_surface_qm(const char * output)
 		{

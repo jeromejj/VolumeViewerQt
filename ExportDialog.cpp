@@ -4,6 +4,7 @@
 ExportDialog::ExportDialog(QWidget * _parent) : QDialog(_parent)
 {
 	QVBoxLayout * layout = new QVBoxLayout();
+	layout->addWidget(createGroupBox());
 	layout->addWidget(createExportGroup());
 
 	QDialogButtonBox * defaultButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -26,18 +27,32 @@ ExportDialog::~ExportDialog()
 
 void ExportDialog::accept()
 {
+	int r = 0;
 	if (whole->isChecked())
 	{
-		done(1);
+		r = 1;
 	}
 	else if (cutBelow->isChecked())
 	{
-		done(2);
+		r = 2;
 	}
 	else if (cutAbove->isChecked())
 	{
-		done(3);
+		r = 3;
 	}
+
+	if (withGroup->isChecked())
+	{
+		r = r << 1;
+		r = r | 1;
+	}
+	else if (withoutGroup->isChecked())
+	{
+		r = r << 1;
+		r = r | 0;
+	}
+
+	done(r);
 };
 
 QGroupBox * ExportDialog::createExportGroup()
@@ -56,4 +71,21 @@ QGroupBox * ExportDialog::createExportGroup()
 	exportGroup->setLayout(vbox);
 
 	return exportGroup;
+};
+
+QGroupBox * ExportDialog::createGroupBox()
+{
+	groupBox = new QGroupBox(tr("Exporting Group Options"));
+	withGroup = new QRadioButton(tr("Export with Group Attribute"));
+	withoutGroup = new QRadioButton(tr("Export without Group Attribute"));
+	withoutGroup->setChecked(true);
+
+	QVBoxLayout * vbox = new QVBoxLayout();
+	vbox->addWidget(withoutGroup);
+	vbox->addWidget(withGroup);
+	vbox->addStretch(1);
+
+	groupBox->setLayout(vbox);
+
+	return groupBox;
 };
