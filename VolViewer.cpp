@@ -1373,45 +1373,59 @@ void VolViewer::screenshot()
 
 void VolViewer::saveMesh()
 {
-	QString saveFilename = QFileDialog::getSaveFileName(this,
-		tr("Save Mesh File"),
-		tr("../models/"),
-		tr("TET Files (*.tet);;"
-		"T Files (*.t);;"
-		"Hex Mesh Files (*.hm)"
-		"All Files (*.*)"));
-	QFileInfo * saveFileInfo = new QFileInfo(saveFilename);
-	std::string saveFileExt = saveFileInfo->suffix().toStdString();
-	if (!saveFilename.isEmpty())
+	for (size_t t = 0; t < tmeshlist.size(); t++)
 	{
-		QByteArray byteArray = saveFilename.toUtf8();
-		const char * _saveFilename = byteArray.constData();
-		saveFile(_saveFilename, saveFileExt);
+		QString saveFilename = QFileDialog::getSaveFileName(this,
+			tr("Save Tet Mesh File"),
+			tr("../models/"),
+			tr("TET Files (*.tet);;"
+			"T Files (*.t);;"
+			"All Files (*.*)"));
+		QFileInfo * saveFileInfo = new QFileInfo(saveFilename);
+		std::string saveFileExt = saveFileInfo->suffix().toStdString();
+		if (!saveFilename.isEmpty())
+		{
+			QByteArray byteArray = saveFilename.toUtf8();
+			const char * _saveFilename = byteArray.constData();
+			saveFile(tmeshlist[t], _saveFilename, saveFileExt);
+		}
+	}
+
+	for (size_t h = 0; h < hmeshlist.size(); h++)
+	{
+		QString saveFilename = QFileDialog::getSaveFileName(this,
+			tr("Save Hex Mesh File"),
+			tr("../models/"),
+			tr("Hex Mesh Files (*.hm);;"
+			"All Files (*.*)"));
+		QFileInfo * saveFileInfo = new QFileInfo(saveFilename);
+		std::string saveFileExt = saveFileInfo->suffix().toStdString();
+		if (!saveFilename.isEmpty())
+		{
+			QByteArray byteArray = saveFilename.toUtf8();
+			const char * _saveFilename = byteArray.constData();
+			saveFile(hmeshlist[h], _saveFilename, saveFileExt);
+		}
 	}
 }
 
-void VolViewer::saveFile(const char * meshfile, std::string sExt)
+void VolViewer::saveFile(TMeshLib::CVTMesh * mesh, const char * meshfile, std::string sExt)
 {
 	if (sExt == "tet")
 	{
-		if (tmeshlist.size() > 0)
-		{
-			tmeshlist[0]->_write(meshfile);
-		}
+		mesh->_write(meshfile);
 	}
 	else if (sExt == "t")
 	{
-		if (tmeshlist.size() > 0)
-		{
-			tmeshlist[0]->_write_t(meshfile);
-		}
+		mesh->_write_t(meshfile);
 	}
-	else if (sExt == "hm")
+}
+
+void VolViewer::saveFile(HMeshLib::CVHMesh * mesh, const char * meshfile, std::string sExt)
+{
+	if (sExt == "hm")
 	{
-		if (hmeshlist.size() > 0)
-		{
-			hmeshlist[0]->_write_hm(meshfile);
-		}
+		mesh->_write_hm(meshfile);
 	}
 }
 

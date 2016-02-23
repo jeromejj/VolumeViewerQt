@@ -41,7 +41,8 @@ public:
 	~VolViewer();
 
 	void loadFile(const char *, std::string sExt);
-	void saveFile(const char *, std::string sExt);
+	void saveFile(TMeshLib::CVTMesh * mesh, const char *, std::string sExt);
+	void saveFile(HMeshLib::CVHMesh * mesh, const char *, std::string sExt);
 	void exportVisibleSurface(const char *, std::string sExt, int exportOpt);	//!< export the visible surface of the tet mesh
 
 	void setDrawMode(DRAW_MODE drawMode);
