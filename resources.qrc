@@ -26,5 +26,7 @@
     <file>images/cut.png</file>
     <file>images/boundary.png</file>
     <file>images/export_surface.png</file>
+    <file>images/merge.png</file>
+    <file>images/samepoint.png</file>
   </qresource>
 </RCC>

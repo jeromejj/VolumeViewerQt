@@ -120,6 +120,16 @@ void MainWindow::createActions()
 	cutAction->setStatusTip(tr("Cut the Volume along Selected Faces"));
 	connect(cutAction, SIGNAL(triggered()), viewer, SLOT(cutVolume()));
 
+	mergeAction = new QAction(tr("&Merge"), this);
+	mergeAction->setIcon(QIcon(":/icons/images/merge.png"));
+	mergeAction->setStatusTip(tr("Merge the two volumes"));
+	connect(mergeAction, SIGNAL(triggered()), viewer, SLOT(mergeVolume()));
+
+	mergeSamePointAction = new QAction(tr("SamePoint"), this);
+	mergeSamePointAction->setIcon(QIcon(":/icons/images/samepoint.png"));
+	mergeSamePointAction->setStatusTip(tr("Merge the same point of the volume"));
+	connect(mergeSamePointAction, SIGNAL(triggered()), viewer, SLOT(mergeSamePoint()));
+
 	lightControl = new checkableAction(this);
 	lightControl->setText(tr("&Light Control"));
 	lightControl->setIcon(QIcon(":/icons/images/light.png"));
@@ -247,7 +257,9 @@ void MainWindow::createToolbar()
 	editToolbar = addToolBar(tr("&Edit"));
 	editToolbar->addAction(selectAction);
 	editToolbar->addAction(selectCutFaces);
-	editToolbar->addAction(cutAction);
+	//editToolbar->addAction(cutAction);
+	editToolbar->addAction(mergeAction);
+	editToolbar->addAction(mergeSamePointAction);
 	editToolbar->addAction(clearSelected);
 
 	viewToolbar = addToolBar(tr("&View"));

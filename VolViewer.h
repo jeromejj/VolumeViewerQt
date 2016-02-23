@@ -13,6 +13,7 @@
 #include <string>
 
 #include "ExportDialog.h"
+#include "MergeDialog.h"
 
 #include "OpenGLHeader.h"
 #include "..\MeshLib\core\bmp\RgbImage.h"
@@ -41,7 +42,8 @@ public:
 	~VolViewer();
 
 	void loadFile(const char *, std::string sExt);
-	void saveFile(const char *, std::string sExt);
+	void saveFile(TMeshLib::CVTMesh * mesh, const char *, std::string sExt);
+	void saveFile(HMeshLib::CVHMesh * mesh, const char *, std::string sExt);
 	void exportVisibleSurface(const char *, std::string sExt, int exportOpt);	//!< export the visible surface of the tet mesh
 
 	void setDrawMode(DRAW_MODE drawMode);
@@ -65,6 +67,9 @@ public slots:
 
 	void enterSelectionCutFaceMode();
 	void quitSelectionCutFaceMode();
+
+	void mergeVolume();
+	void mergeSamePoint();
 
 	void lightOn();
 	void lightOff();
@@ -120,9 +125,9 @@ private:
 	void drawBoundaryHalfFaces(HMeshLib::CVHMesh * hmesh);
 	void drawVector();
 
-	void drawHalfFaces(std::vector<TMeshLib::CViewerHalfFace*> & HalfFaces);
+	void drawHalfFaces(TMeshLib::CVTMesh * mesh, std::vector<TMeshLib::CViewerHalfFace*> & HalfFaces);
 
-	void drawHalfFaces(std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces);
+	void drawHalfFaces(HMeshLib::CVHMesh * mesh, std::vector<HMeshLib::CHViewerHalfFace*> & HalfFaces);
 
 	float fovy() const { return 45.0f; }
 
@@ -138,7 +143,7 @@ private:
 	void rotationView(QPoint newPos);
 	void rotate(CPoint axis, double angle);
 
-	void selectCutFace(QPoint newPos);
+	void selectBoundaryCutVertices(QPoint newPos);
 	void selectAllCutFaces(QPoint newPos);
 
 	CPoint getRayVector(QPoint point, CPoint & nearPt, CPoint & farPt);
@@ -164,9 +169,6 @@ private:
 	bool isRotationViewOn;
 
 	VOLUME_TYPE meshVolType;
-
-	TMeshLib::CVTMesh * mesh;
-	HMeshLib::CVHMesh * hmesh;
 
 	std::vector<TMeshLib::CVTMesh*> tmeshlist;
 	std::vector<HMeshLib::CVHMesh*> hmeshlist;

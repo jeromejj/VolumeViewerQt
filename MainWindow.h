@@ -55,6 +55,8 @@ private:
 	checkableAction * selectCutFaces;
 	QAction * cutAction;
 	QAction * clearSelected;
+	QAction * mergeAction;
+	QAction * mergeSamePointAction;
 
 	QAction * xCut;
 	QAction * yCut;
