@@ -17,6 +17,7 @@ VolViewer::VolViewer(QWidget *_parent) : QGLWidget(_parent)
 	isRotationViewOn = true;
 
 	fiberMinLength = 0;
+
 }
 
 
