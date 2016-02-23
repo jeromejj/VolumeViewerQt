@@ -246,6 +246,8 @@ namespace MeshLib
 			/*! get cut faces vector */
 			std::vector<F *> _getCutFaces() { return m_cutFaces; };
 
+			std::vector<CVertex*> & selectedVertices() { return m_selectedVertices; };
+
 			// cut the volume along selected faces
 			void _cutVolumeWrite(const char * filename, std::string ext);
 
@@ -292,6 +294,8 @@ namespace MeshLib
 			std::vector<HF*> m_pHFaces_Below;
 			std::vector<F *> m_cutFaces;
 			std::vector<F *> m_selectedFacesList;
+
+			std::vector<CVertex*> m_selectedVertices;
 
 		protected:
 
@@ -1120,7 +1124,15 @@ namespace MeshLib
 			size_t idx = outputName.find_last_of(".");
 			std::string ext = outputName.substr(idx, outputName.length() - idx);
 
-			std::string outputfile = outputName.substr(0, idx) + "." + std::to_string(groupid) + ext;
+			std::string outputfile;
+			if (m_maxGroup - m_minGroup == 0)
+			{
+				outputfile = outputName.substr(0, idx) + ext;
+			}
+			else
+			{
+				outputfile = outputName.substr(0, idx) + "." + std::to_string(groupid) + ext;
+			}
 
 			std::fstream _os(outputfile.c_str(), std::fstream::out);
 			if (_os.fail())
@@ -1201,7 +1213,15 @@ namespace MeshLib
 			size_t idx = outputName.find_last_of(".");
 			std::string ext = outputName.substr(idx, outputName.length() - idx);
 
-			std::string outputfile = outputName.substr(0, idx) + ".surface." + std::to_string(groupid) + ext;
+			std::string outputfile;
+			if (m_maxGroup - m_minGroup == 0)
+			{
+				outputfile = outputName.substr(0, idx) + ".surface" + ext;
+			}
+			else
+			{
+				outputfile = outputName.substr(0, idx) + ".surface." + std::to_string(groupid) + ext;
+			}
 
 			std::fstream _os(outputfile.c_str(), std::fstream::out);
 			if (_os.fail())
@@ -1421,8 +1441,16 @@ namespace MeshLib
 			size_t idx = outputName.find_last_of(".");
 			std::string ext = outputName.substr(idx, outputName.length() - idx);
 
-			std::string outputfile = outputName.substr(0, idx) + "." + std::to_string(groupid) + ext;
-			
+			std::string outputfile;
+			if (m_maxGroup - m_minGroup == 0)
+			{
+				outputfile = outputName.substr(0, idx) + ext;
+			}
+			else
+			{
+				outputfile = outputName.substr(0, idx) + "." + std::to_string(groupid) + ext;
+			}
+
 			std::fstream _os(outputfile.c_str(), std::fstream::out);
 			if (_os.fail())
 			{
@@ -1503,7 +1531,15 @@ namespace MeshLib
 			size_t idx = outputName.find_last_of(".");
 			std::string ext = outputName.substr(idx, outputName.length() - idx);
 
-			std::string outputfile = outputName.substr(0, idx) + ".surface." + std::to_string(groupid) + ext;
+			std::string outputfile;
+			if (m_maxGroup - m_minGroup == 0)
+			{
+				outputfile = outputName.substr(0, idx) + ".surface" + ext;
+			}
+			else
+			{
+				outputfile = outputName.substr(0, idx) + ".surface." + std::to_string(groupid) + ext;
+			}
 
 			std::fstream _os(outputfile.c_str(), std::fstream::out);
 			if (_os.fail())
@@ -1538,7 +1574,6 @@ namespace MeshLib
 			_os.close();
 
 		};
-
 
 		typedef CViewerTMesh<CViewerTVertex, CViewerVertex, CViewerHalfEdge, CViewerTEdge, CViewerEdge, CViewerHalfFace, CViewerFace, CViewerTet> CVTMesh;
 

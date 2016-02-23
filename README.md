@@ -1,12 +1,21 @@
 # VolumeViewerQt
+
 A Viewer for 3-Dimensional Manifold
 
-- This is a viewer for tetrahedron and hexahedron mesh
+## Author
+- Jerome Jiang
+- David Gu
+
+## Features
+- Rendering both tetrahedron and hexahedron mesh
 - Support opening and rendering multiple meshes
-- GUI written in Qt 5.3+
+- Support selecting vertices on the boundary and cut surface
+- Support merging the selected vertices from different meshes
+- GUI written in Qt 5.3.1
 
 ## Build
 - Microsoft Visual Studio 2013 and above
+- MSVC Qt add-in
 - 64 bits
 - Requirements:
  - MeshLib of latest version

@@ -185,6 +185,8 @@ namespace MeshLib
 
 			~CViewerHMesh(){ ; };
 
+			std::vector<CVertex*> & selectedVertices() { return m_selectedVertices; };
+
 			// normalize the hex mesh
 			void _normalize();
 
@@ -204,10 +206,11 @@ namespace MeshLib
 			void _write_surface_obj(const char * output);
 
 		public:
-			std::vector<HF*> m_pHFaces_Above;
-			std::vector<HF*> m_pHFaces_Below;
-			std::vector<F *> m_cutFaces;
-			std::vector<F *> m_selectedFacesList;
+			std::vector<CHalfFace*> m_pHFaces_Above;
+			std::vector<CHalfFace*> m_pHFaces_Below;
+			std::vector<CFace *> m_cutFaces;
+			std::vector<CFace *> m_selectedFacesList;
+			std::vector<CVertex *> m_selectedVertices;
 		};
 
 

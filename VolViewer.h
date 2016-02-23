@@ -66,6 +66,8 @@ public slots:
 	void enterSelectionCutFaceMode();
 	void quitSelectionCutFaceMode();
 
+	void mergeVolume();
+
 	void lightOn();
 	void lightOff();
 

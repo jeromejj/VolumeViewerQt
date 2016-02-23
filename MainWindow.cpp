@@ -120,6 +120,11 @@ void MainWindow::createActions()
 	cutAction->setStatusTip(tr("Cut the Volume along Selected Faces"));
 	connect(cutAction, SIGNAL(triggered()), viewer, SLOT(cutVolume()));
 
+	mergeAction = new QAction(tr("&Merge"), this);
+	mergeAction->setIcon(QIcon(":/icons/images/merge.png"));
+	mergeAction->setStatusTip(tr("Merge the two volumes"));
+	connect(mergeAction, SIGNAL(triggered()), viewer, SLOT(mergeVolume()));
+
 	lightControl = new checkableAction(this);
 	lightControl->setText(tr("&Light Control"));
 	lightControl->setIcon(QIcon(":/icons/images/light.png"));
@@ -248,6 +253,7 @@ void MainWindow::createToolbar()
 	editToolbar->addAction(selectAction);
 	editToolbar->addAction(selectCutFaces);
 	//editToolbar->addAction(cutAction);
+	editToolbar->addAction(mergeAction);
 	editToolbar->addAction(clearSelected);
 
 	viewToolbar = addToolBar(tr("&View"));

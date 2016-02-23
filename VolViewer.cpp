@@ -803,6 +803,8 @@ void VolViewer::selectBoundaryCutVertices(QPoint newPos)
 	double minHAngle = std::numeric_limits<double>::max();
 	TMeshLib::CViewerVertex * minVertex = nullptr;
 	HMeshLib::CHViewerVertex * minHVertex = nullptr;
+	TMeshLib::CVTMesh * minTMesh = nullptr;
+	HMeshLib::CVHMesh * minHMesh = nullptr;
 
 	for (size_t t = 0; t < tmeshlist.size(); t++)
 	{
@@ -828,6 +830,7 @@ void VolViewer::selectBoundaryCutVertices(QPoint newPos)
 			{
 				minAngle = abs(acos(angle));
 				minVertex = pV;
+				minTMesh = tmesh;
 			}
 		}
 	}
@@ -854,6 +857,7 @@ void VolViewer::selectBoundaryCutVertices(QPoint newPos)
 			{
 				minHAngle = abs(acos(angle));
 				minHVertex = pV;
+				minHMesh = hmesh;
 			}
 		}
 	}
@@ -867,6 +871,7 @@ void VolViewer::selectBoundaryCutVertices(QPoint newPos)
 		else
 		{
 			minVertex->selected() = true;
+			minTMesh->selectedVertices().push_back(minVertex);
 		}
 	}
 	else
@@ -878,6 +883,7 @@ void VolViewer::selectBoundaryCutVertices(QPoint newPos)
 		else
 		{
 			minHVertex->selected() = true;
+			minHMesh->selectedVertices().push_back(minHVertex);
 		}
 
 	}
@@ -1729,7 +1735,7 @@ void VolViewer::minusMove()
 	}
 
 	updateGL();
-}
+};
 
 void VolViewer::cutVolume()
 {
@@ -1745,7 +1751,42 @@ void VolViewer::cutVolume()
 	////saveFile(charFilename, sFileExt);
 
 	//mesh->_write_cut_vertices(cutVertexName.c_str());
-}
+};
+
+void VolViewer::mergeVolume()
+{
+	if (hmeshlist.size() >= 2)
+	{
+		HMeshLib::CVHMesh * hmesh0 = hmeshlist[0];
+		HMeshLib::CVHMesh * hmesh1 = hmeshlist[1];
+
+		std::vector<HMeshLib::CHViewerVertex*> selectedVertices0 = hmesh0->selectedVertices();
+		std::vector<HMeshLib::CHViewerVertex*> selectedVertices1 = hmesh1->selectedVertices();
+
+		for (size_t v = 0; v < std::min(selectedVertices0.size(), selectedVertices1.size()); v++)
+		{
+			HMeshLib::CHViewerVertex * v0 = selectedVertices0[v];
+			HMeshLib::CHViewerVertex * v1 = selectedVertices1[v];
+
+			CPoint p0 = v0->position();
+			CPoint p1 = v1->position();
+
+			v0->position() = (p0 + p1) / 2.0;
+			v1->position() = (p0 + p1) / 2.0;
+			v0->selected() = false;
+			v1->selected() = false;
+		}
+
+		hmesh0->selectedVertices().clear();
+		hmesh1->selectedVertices().clear();
+	}
+	else if (tmeshlist.size() >= 2)
+	{
+
+	}
+
+	updateGL();
+};
 
 void VolViewer::clearSelectedVF()
 {
