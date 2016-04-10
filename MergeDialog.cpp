@@ -43,7 +43,7 @@ QGroupBox * MergeDialog::createMergeGroup()
 	mergeGroup = new QGroupBox(tr("Merge Options"));
 	average = new QRadioButton(tr("Average of Two Vertices"));
 	one2two = new QRadioButton(tr("Move the vertex in Mesh 1 to the vertex in Mesh 2"));
-	two2one = new QRadioButton(tr("Move the vertex in Mesh 1 to the vertex in Mesh 2"));
+	two2one = new QRadioButton(tr("Move the vertex in Mesh 2 to the vertex in Mesh 1"));
 	average->setChecked(true);
 
 	QVBoxLayout * vbox = new QVBoxLayout();

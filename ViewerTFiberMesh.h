@@ -1347,7 +1347,7 @@ namespace MeshLib
 				for (int k = 0; k < 4; k++)
 				{
 					CVertex * pV = HalfEdgeTarget(pHE);
-					if (std::find(vertices.begin(), vertices.end(), pV) != vertices.end())
+					if (std::find(vertices.begin(), vertices.end(), pV) == vertices.end())
 					{
 						vertices.push_back(pV);
 					}
@@ -1421,12 +1421,19 @@ namespace MeshLib
 			}
 
 			std::vector<CVertex*> vertices;
-			for (std::list<CVertex*>::iterator vIter = m_pVertices.begin(); vIter != m_pVertices.end(); vIter++)
+			
+			for (std::vector<HF*>::iterator hiter = outputHalfFaces.begin(); hiter != outputHalfFaces.end(); hiter++)
 			{
-				CVertex * pV = *vIter;
-				if (pV->boundary() && (pV->group() == groupid || pV->group() == 0))
+				CHalfFace *pHF = *hiter;
+				CHalfEdge *pHE = HalfFaceHalfEdge(pHF);
+				for (int k = 0; k < 3; k++)
 				{
-					vertices.push_back(pV);
+					CVertex * pV = HalfEdgeTarget(pHE);
+					if (std::find(vertices.begin(), vertices.end(), pV) == vertices.end())
+					{
+						vertices.push_back(pV);
+					}
+					pHE = HalfEdgeNext(pHE);
 				}
 			}
 

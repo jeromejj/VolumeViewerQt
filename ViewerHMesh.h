@@ -579,7 +579,7 @@ namespace MeshLib
 				for (int k = 0; k < 4; k++)
 				{
 					CVertex * pV = HalfEdgeTarget(pHE);
-					if (std::find(vertices.begin(), vertices.end(), pV) != vertices.end())
+					if (std::find(vertices.begin(), vertices.end(), pV) == vertices.end())
 					{
 						vertices.push_back(pV);
 					}
@@ -642,7 +642,7 @@ namespace MeshLib
 				for (int k = 0; k < 4; k++)
 				{
 					CVertex * pV = HalfEdgeTarget(pHE);
-					if (std::find(vertices.begin(), vertices.end(), pV) != vertices.end())
+					if (std::find(vertices.begin(), vertices.end(), pV) == vertices.end())
 					{
 						vertices.push_back(pV);
 					}
