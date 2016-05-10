@@ -173,8 +173,6 @@ private:
 	std::vector<TMeshLib::CVTMesh*> tmeshlist;
 	std::vector<HMeshLib::CVHMesh*> hmeshlist;
 
-	bool exportGroup = false;
-
 	CPoint center;
 	GLdouble radius;
 	double trackballRadius;

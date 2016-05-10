@@ -4,7 +4,6 @@
 ExportDialog::ExportDialog(QWidget * _parent) : QDialog(_parent)
 {
 	QVBoxLayout * layout = new QVBoxLayout();
-	layout->addWidget(createGroupBox());
 	layout->addWidget(createExportGroup());
 
 	QDialogButtonBox * defaultButtonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -17,7 +16,7 @@ ExportDialog::ExportDialog(QWidget * _parent) : QDialog(_parent)
 	setLayout(layout);
 
 	setWindowTitle(tr("Export:"));
-	resize(360, 240);
+	resize(360, 180);
 };
 
 
@@ -32,24 +31,16 @@ void ExportDialog::accept()
 	{
 		r = 1;
 	}
-	else if (cutBelow->isChecked())
+	else if (onlyBelow->isChecked())
 	{
 		r = 2;
 	}
-	else if (cutAbove->isChecked())
+	else if (onlyAbove->isChecked())
 	{
 		r = 3;
 	}
-
-	if (withGroup->isChecked())
-	{
-		r = r << 1;
-		r = r | 1;
-	}
-	else if (withoutGroup->isChecked())
-	{
-		r = r << 1;
-		r = r | 0;
+	else if (onlyCut->isChecked()) {
+		r = 4;
 	}
 
 	done(r);
@@ -59,33 +50,18 @@ QGroupBox * ExportDialog::createExportGroup()
 {
 	exportGroup = new QGroupBox(tr("Exporting Options"));
 	whole = new QRadioButton(tr("The Whole Surface"));
-	cutBelow = new QRadioButton(tr("The Cut Surface and Below"));
-	cutAbove = new QRadioButton(tr("The Cut Surface and Above"));
+	onlyBelow = new QRadioButton(tr("The Below Surface"));
+	onlyAbove = new QRadioButton(tr("The Above Surface"));
+	onlyCut = new QRadioButton(tr("The Cut Surface"));
 	whole->setChecked(true);
 
 	QVBoxLayout * vbox = new QVBoxLayout();
 	vbox->addWidget(whole);
-	vbox->addWidget(cutBelow);
-	vbox->addWidget(cutAbove);
+	vbox->addWidget(onlyBelow);
+	vbox->addWidget(onlyAbove);
+	vbox->addWidget(onlyCut);
 	vbox->addStretch(1);
 	exportGroup->setLayout(vbox);
 
 	return exportGroup;
-};
-
-QGroupBox * ExportDialog::createGroupBox()
-{
-	groupBox = new QGroupBox(tr("Exporting Group Options"));
-	withGroup = new QRadioButton(tr("Export with Group Attribute"));
-	withoutGroup = new QRadioButton(tr("Export without Group Attribute"));
-	withoutGroup->setChecked(true);
-
-	QVBoxLayout * vbox = new QVBoxLayout();
-	vbox->addWidget(withoutGroup);
-	vbox->addWidget(withGroup);
-	vbox->addStretch(1);
-
-	groupBox->setLayout(vbox);
-
-	return groupBox;
 };

@@ -1442,6 +1442,7 @@ void VolViewer::saveFile(HMeshLib::CVHMesh * mesh, const char * meshfile, std::s
 
 void VolViewer::exportVisibleMesh()
 {
+	if (tmeshlist.size() == 0 && hmeshlist.size() == 0) return;
 
 	ExportDialog * exportDiag = new ExportDialog(this);
 	int r = exportDiag->exec();
@@ -1463,20 +1464,9 @@ void VolViewer::exportVisibleMesh()
 	std::string exportFileExt = exportFileInfo->suffix().toStdString();
 	if (!exportFilename.isEmpty())
 	{
-		// label group number to vertex
-		int rr = r & 1;
-		exportGroup = (rr == 1);
-		if (exportGroup)
-		{
-			for (int t = 0; t < tmeshlist.size(); t++)
-			{
-				TMeshLib::CVTMesh * pTMesh = tmeshlist[t];
-				pTMesh->_labelVertexGroup();
-			}
-		}
 		QByteArray byteArray = exportFilename.toUtf8();
 		const char * _exportFilename = byteArray.constData();
-		exportVisibleSurface(_exportFilename, exportFileExt, r >> 1);
+		exportVisibleSurface(_exportFilename, exportFileExt, r);
 	}
 }
 
@@ -1493,11 +1483,13 @@ void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt
 				tmeshlist[0]->_write_surface_m(surface_file);
 				break;
 			case 2:
-				tmeshlist[0]->_write_cut_below_surface_m(surface_file);
+				tmeshlist[0]->_write_below_surface_m(surface_file);
 				break;
 			case 3:
-				tmeshlist[0]->_write_cut_above_surface_m(surface_file);
+				tmeshlist[0]->_write_above_surface_m(surface_file);
 				break;
+			case 4:
+				tmeshlist[0]->_write_cut_surface_m(surface_file);
 			default:
 				break;
 			}
@@ -1513,10 +1505,10 @@ void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt
 				hmeshlist[0]->_write_surface_qm(surface_file);
 				break;
 			case 2:
-				hmeshlist[0]->_write_cut_below_surface_qm(surface_file);
+				hmeshlist[0]->_write_below_surface_qm(surface_file);
 				break;
 			case 3:
-				hmeshlist[0]->_write_cut_above_surface_qm(surface_file);
+				hmeshlist[0]->_write_above_surface_qm(surface_file);
 				break;
 			default:
 				break;
@@ -1534,32 +1526,13 @@ void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt
 				tmeshlist[0]->_write_surface_obj(surface_file);
 				break;
 			case 2:
-				if (exportGroup)
-				{
-					for (int g = tmeshlist[0]->minGroup(); g <= tmeshlist[0]->maxGroup(); g++)
-					{
-						tmeshlist[0]->_write_cut_below_surface_group_obj(surface_file, g);
-						tmeshlist[0]->_write_cut_below_surface_only_group_obj(surface_file, g);
-					}
-				}
-				else
-				{
-					tmeshlist[0]->_write_cut_below_surface_obj(surface_file);
-				}
+				tmeshlist[0]->_write_below_surface_obj(surface_file);
 				break;
 			case 3:
-				if (exportGroup)
-				{
-					for (int g = tmeshlist[0]->minGroup(); g <= tmeshlist[0]->maxGroup(); g++)
-					{
-						tmeshlist[0]->_write_cut_above_surface_group_obj(surface_file, g);
-						tmeshlist[0]->_write_cut_above_surface_only_group_obj(surface_file, g);
-					}
-				}
-				else
-				{
-					tmeshlist[0]->_write_cut_above_surface_obj(surface_file);
-				}
+				tmeshlist[0]->_write_above_surface_obj(surface_file);
+				break;
+			case 4:
+				tmeshlist[0]->_write_cut_surface_obj(surface_file);
 				break;
 			default:
 				break;
@@ -1573,10 +1546,10 @@ void VolViewer::exportVisibleSurface(const char * surface_file, std::string sExt
 				hmeshlist[0]->_write_surface_obj(surface_file);
 				break;
 			case 2:
-				hmeshlist[0]->_write_cut_below_surface_obj(surface_file);
+				hmeshlist[0]->_write_below_surface_obj(surface_file);
 				break;
 			case 3:
-				hmeshlist[0]->_write_cut_above_surface_obj(surface_file);
+				hmeshlist[0]->_write_above_surface_obj(surface_file);
 				break;
 			default:
 				break;
